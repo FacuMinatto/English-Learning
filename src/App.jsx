@@ -282,27 +282,6 @@ function App() {
       el.style.setProperty('--primary-dark', primaryDark);
       el.style.setProperty('--success-color', themeColor);
     });
-
-    // Dynamically update SVG favicon with transparent background matching custom theme color
-    try {
-      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><g transform="rotate(-45 50 50)"><rect x="42" y="10" width="16" height="35" rx="5" fill="${encodeURIComponent(themeColor)}"/><rect x="42" y="55" width="16" height="35" rx="5" fill="${encodeURIComponent(themeColor)}"/><rect x="15" y="37" width="35" height="16" rx="5" fill="${encodeURIComponent(themeColor)}"/><rect x="50" y="47" width="35" height="16" rx="5" fill="${encodeURIComponent(themeColor)}"/></g></svg>`;
-      const dataUri = `data:image/svg+xml;utf8,${svg}`;
-      const iconLinks = document.querySelectorAll("link[rel*='icon']");
-      if (iconLinks.length > 0) {
-        iconLinks.forEach(link => {
-          link.type = 'image/svg+xml';
-          link.href = dataUri;
-        });
-      } else {
-        const newLink = document.createElement('link');
-        newLink.rel = 'icon';
-        newLink.type = 'image/svg+xml';
-        newLink.href = dataUri;
-        document.head.appendChild(newLink);
-      }
-    } catch (e) {
-      console.error('Error updating dynamic favicon:', e);
-    }
   }, [themeColor, isDarkActive]);
 
 

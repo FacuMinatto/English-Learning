@@ -1,8 +1,9 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { Preferences } from '@capacitor/preferences';
 
-// Backward compatibility helper to migrate old data
-const migrateOldSettings = () => {
+// Backward compatibility helper to migrate old data and sync with native Android Preferences
+const migrateOldSettings = async () => {
   const oldKeys = [
     'app_themeMode', 'app_themeColor', 'app_wordsPerDay', 
     'app_phrasesPerDay', 'app_voiceSpeed', 'app_soundFx', 
@@ -25,12 +26,57 @@ const migrateOldSettings = () => {
     });
 
     if (hasOldData && !localStorage.getItem('app-settings-storage')) {
-      localStorage.setItem('app-settings-storage', JSON.stringify({ state: migrated, version: 0 }));
+      const payload = JSON.stringify({ state: migrated, version: 0 });
+      localStorage.setItem('app-settings-storage', payload);
+      try { await Preferences.set({ key: 'app-settings-storage', value: payload }); } catch(e) {}
+      useSettingsStore.setState(migrated);
+      return;
+    }
+
+    // Check if Preferences has backup if localStorage was empty
+    const currentLocal = localStorage.getItem('app-settings-storage');
+    if (!currentLocal) {
+      try {
+        const { value } = await Preferences.get({ key: 'app-settings-storage' });
+        if (value) {
+          localStorage.setItem('app-settings-storage', value);
+          const parsed = JSON.parse(value);
+          if (parsed?.state) {
+            useSettingsStore.setState(parsed.state);
+          }
+        }
+      } catch(e) {}
+    } else {
+      try {
+        await Preferences.set({ key: 'app-settings-storage', value: currentLocal });
+      } catch(e) {}
     }
   } catch(e) {}
 };
 
-migrateOldSettings();
+// Immediate synchronous migration for legacy keys
+try {
+  const oldKeys = [
+    'app_themeMode', 'app_themeColor', 'app_wordsPerDay', 
+    'app_phrasesPerDay', 'app_voiceSpeed', 'app_soundFx', 
+    'app_reminderEnabled', 'app_reminderSchedule'
+  ];
+  let hasOldData = false;
+  const migrated = {};
+  oldKeys.forEach(key => {
+    const val = localStorage.getItem(key);
+    if (val !== null) {
+      hasOldData = true;
+      const parsed = JSON.parse(val);
+      const newKey = key.replace('app_', '');
+      if (newKey === 'soundFx') migrated.soundEnabled = parsed;
+      else migrated[newKey] = parsed;
+    }
+  });
+  if (hasOldData && !localStorage.getItem('app-settings-storage')) {
+    localStorage.setItem('app-settings-storage', JSON.stringify({ state: migrated, version: 0 }));
+  }
+} catch(e) {}
 
 export const useSettingsStore = create(
   persist(
@@ -68,3 +114,31 @@ export const useSettingsStore = create(
     }
   )
 );
+
+// Synchronize state changes to native Preferences in background
+useSettingsStore.subscribe((state) => {
+  try {
+    const payload = JSON.stringify({
+      state: {
+        themeMode: state.themeMode,
+        themeColor: state.themeColor,
+        wordsPerDay: state.wordsPerDay,
+        phrasesPerDay: state.phrasesPerDay,
+        voiceSpeed: state.voiceSpeed,
+        soundEnabled: state.soundEnabled,
+        reminderEnabled: state.reminderEnabled,
+        reminderSchedule: state.reminderSchedule,
+        voiceStrictMode: state.voiceStrictMode
+      },
+      version: 0
+    });
+    Preferences.set({ key: 'app-settings-storage', value: payload }).catch(() => {});
+  } catch(e) {}
+});
+
+// Run async check on load
+if (typeof window !== 'undefined') {
+  setTimeout(() => {
+    migrateOldSettings();
+  }, 100);
+}
