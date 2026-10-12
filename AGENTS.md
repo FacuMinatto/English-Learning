@@ -10,6 +10,7 @@ Cada vez que se complete una petición o modificación en el código:
    - Ejecutar `npx cap sync android` para sincronizar los archivos y plugins en Android.
    - Compilar el instalador APK ejecutando `gradlew.bat assembleDebug` dentro de la carpeta `android`.
    - Verificar que el APK `android/app/build/outputs/apk/debug/app-debug.apk` se haya generado con éxito.
+   - Copiar el APK generado a `C:\Users\facum\OneDrive\Escritorio\APPs IA\EnglishLearning.apk` (según `build_apk.bat`).
 
 3. **Subida a Git (GitHub)**:
    - Crear un commit con los cambios (`git commit -am "..."`).
