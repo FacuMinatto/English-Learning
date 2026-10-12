@@ -1560,20 +1560,7 @@ function App() {
                       }}
                     >
                       <div className="card-actions-row">
-                        {showStudyTranslation && (
-                          <button 
-                            className="card-toggle-answer-btn"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setShowStudyTranslation(false);
-                            }}
-                            title="Ocultar respuesta y volver a la palabra en inglés"
-                            aria-label="Volver a inglés"
-                          >
-                            <RotateCcw size={13} />
-                            <span>Volver a inglés</span>
-                          </button>
-                        )}
+
 
                         {/* Optional Pronunciation Microphone */}
                         <button 
@@ -1985,7 +1972,14 @@ function App() {
                       </span>
                     </div>
                     
-                    <div className={`flip-card-outer ${cardAnimClass || 'card-anim-entering'}`} onClick={() => setShowPhraseTranslation(prev => !prev)}>
+                    <div 
+                      className={`flip-card-outer ${cardAnimClass || 'card-anim-entering'}`} 
+                      onClick={() => {
+                        if (!showPhraseTranslation) {
+                          setShowPhraseTranslation(true);
+                        }
+                      }}
+                    >
                       <div className={`flip-card-inner ${showPhraseTranslation ? 'flipped' : ''}`}>
                         {/* Front */}
                         <div className="flip-card-face flip-card-front">
