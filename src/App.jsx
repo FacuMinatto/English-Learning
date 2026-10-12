@@ -2094,15 +2094,7 @@ function App() {
                             </div>
                           )}
 
-                          {/* Visual Hint to flip back */}
-                          <div 
-                            className="flip-card-flip-back-hint"
-                            onClick={() => setShowPhraseTranslation(false)}
-                            title="Toca para volver a la frase en inglés"
-                          >
-                            <RotateCcw size={13} />
-                            <span>Toca para volver a inglés</span>
-                          </div>
+
                           
                           <div className="flashcard-author-watermark">
                             <a 
