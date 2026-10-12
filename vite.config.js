@@ -8,7 +8,7 @@ export default defineConfig({
     react(),
     VitePWA({ 
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'favicon.png', 'apple-touch-icon.png'],
+      includeAssets: ['favicon.ico', 'favicon.png', 'favicon.svg', 'apple-touch-icon.png'],
       manifest: {
         name: 'English Learning App',
         short_name: 'EnglishApp',
