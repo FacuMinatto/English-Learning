@@ -3,6 +3,12 @@
   "name": "English Learning",
   "icons": [
     {
+      "src": "./favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any"
+    },
+    {
       "src": "./favicon.png",
       "type": "image/png",
       "sizes": "192x192",

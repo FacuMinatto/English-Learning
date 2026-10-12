@@ -282,6 +282,27 @@ function App() {
       el.style.setProperty('--primary-dark', primaryDark);
       el.style.setProperty('--success-color', themeColor);
     });
+
+    // Dynamically update SVG favicon with transparent background matching custom theme color
+    try {
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><g transform="rotate(-45 50 50)"><rect x="42" y="10" width="16" height="35" rx="5" fill="${encodeURIComponent(themeColor)}"/><rect x="42" y="55" width="16" height="35" rx="5" fill="${encodeURIComponent(themeColor)}"/><rect x="15" y="37" width="35" height="16" rx="5" fill="${encodeURIComponent(themeColor)}"/><rect x="50" y="47" width="35" height="16" rx="5" fill="${encodeURIComponent(themeColor)}"/></g></svg>`;
+      const dataUri = `data:image/svg+xml;utf8,${svg}`;
+      const iconLinks = document.querySelectorAll("link[rel*='icon']");
+      if (iconLinks.length > 0) {
+        iconLinks.forEach(link => {
+          link.type = 'image/svg+xml';
+          link.href = dataUri;
+        });
+      } else {
+        const newLink = document.createElement('link');
+        newLink.rel = 'icon';
+        newLink.type = 'image/svg+xml';
+        newLink.href = dataUri;
+        document.head.appendChild(newLink);
+      }
+    } catch (e) {
+      console.error('Error updating dynamic favicon:', e);
+    }
   }, [themeColor, isDarkActive]);
 
 
@@ -1372,14 +1393,8 @@ function App() {
       {/* Top Header */}
       <header className="header">
         <div className="header-top">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <img 
-              src="./favicon.png" 
-              alt="English Learning Logo" 
-              style={{ width: '36px', height: '36px', borderRadius: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.2)', flexShrink: 0 }} 
-            />
-            <div>
-              <h1 className="header-title">
+          <div>
+            <h1 className="header-title">
               {activeTab === 'daily' ? 'Repaso Diario' : 
                activeTab === 'phrases' ? 'Frases Útiles' : 
                activeTab === 'games' ? (
@@ -1415,7 +1430,6 @@ function App() {
                 )}
               </p>
             )}
-            </div>
           </div>
           <div className="header-actions">
             {/* Clickable Multi-Option Daily Streak Badge */}
