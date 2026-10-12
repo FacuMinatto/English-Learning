@@ -1,0 +1,97 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap');
+
+:root {
+  /* LIGHT MODE (Clean, airy, sleek) */
+  --bg-color: #F8FAFC;
+  --text-main: #0F172A;
+  --text-light: #64748B;
+  --text-muted: #94A3B8;
+  
+  --primary-color: #28C28C; /* Emerald green default */
+  --primary-glow: rgba(40, 194, 140, 0.25);
+  --primary-light: rgba(40, 194, 140, 0.12);
+  --primary-hover: #21A376;
+  --primary-dark: #1E996D;
+  
+  --card-bg: #FFFFFF;
+  --card-bg-elevated: #F1F5F9;
+  --shadow-color: rgba(15, 23, 42, 0.06);
+  --shadow-lg: 0 14px 34px rgba(15, 23, 42, 0.08);
+  --border-color: rgba(0, 0, 0, 0.06);
+  
+  /* Rating Colors Light */
+  --btn-red-bg: #FEE2E2;
+  --btn-red-txt: #DC2626;
+  --btn-orange-bg: #FEF3C7;
+  --btn-orange-txt: #D97706;
+  --btn-green-bg: #D1FAE5;
+  --btn-green-txt: #059669;
+  --btn-blue-bg: #DBEAFE;
+  --btn-blue-txt: #2563EB;
+}
+
+body.dark-mode {
+  /* DARK MODE (Obsidian/Slate modern iOS palette) */
+  --bg-color: #0F1217;
+  --text-main: #F8FAFC;
+  --text-light: #94A3B8;
+  --text-muted: #64748B;
+  
+  --card-bg: #181D26;
+  --card-bg-elevated: #222834;
+  --shadow-color: rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.45);
+  --border-color: rgba(255, 255, 255, 0.07);
+  
+  /* Rating Colors Dark */
+  --btn-red-bg: rgba(239, 68, 68, 0.16);
+  --btn-red-txt: #FCA5A5;
+  --btn-orange-bg: rgba(245, 158, 11, 0.16);
+  --btn-orange-txt: #FCD34D;
+  --btn-green-bg: rgba(16, 185, 129, 0.16);
+  --btn-green-txt: #6EE7B7;
+  --btn-blue-bg: rgba(59, 130, 246, 0.16);
+  --btn-blue-txt: #93C5FD;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  user-select: none;
+}
+
+h1, h2, h3, .word-en, .phrase-text, .brand-title {
+  font-family: 'Poppins', sans-serif !important;
+  letter-spacing: -0.4px;
+}
+
+/* Custom smooth scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 10px;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-5px); }
+  40%, 80% { transform: translateX(5px); }
+}

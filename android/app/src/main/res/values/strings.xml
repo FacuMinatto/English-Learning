@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">English Learning</string>
+    <string name="title_activity_main">English Learning</string>
+    <string name="package_name">com.englishlearning.app</string>
+    <string name="custom_url_scheme">com.englishlearning.app</string>
+</resources>
