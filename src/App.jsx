@@ -68,6 +68,7 @@ import {
   sendImmediateNotification,
   syncScheduledReminders
 } from './utils/notificationScheduler';
+import { getAppInfo, checkAppUpdates, executeUpdate, APK_DIRECT_URL } from './utils/updateManager';
 
 // Audio and Speech logic has been extracted to utils/audioEngine.js
 
@@ -189,6 +190,37 @@ function App() {
       if (perm) setNotificationPermission(perm);
     });
   }, []);
+
+  // App Version & Update State
+  const [updateState, setUpdateState] = useState({
+    status: 'idle', // 'idle' | 'checking' | 'upToDate' | 'available' | 'error'
+    info: null,
+    errorMsg: ''
+  });
+
+  const handleCheckUpdates = useCallback(async () => {
+    setUpdateState({ status: 'checking', info: null, errorMsg: '' });
+    triggerHaptic(15);
+    playFxSound('click', soundEnabled);
+    try {
+      const res = await checkAppUpdates();
+      if (!res.success) {
+        setUpdateState({ status: 'error', info: null, errorMsg: res.error });
+      } else if (res.hasUpdate) {
+        setUpdateState({ status: 'available', info: res, errorMsg: '' });
+      } else {
+        setUpdateState({ status: 'upToDate', info: res, errorMsg: '' });
+      }
+    } catch (e) {
+      setUpdateState({ status: 'error', info: null, errorMsg: 'Error al comprobar actualizaciones.' });
+    }
+  }, [soundEnabled]);
+
+  const handleApplyUpdate = useCallback(async () => {
+    triggerHaptic(25);
+    playFxSound('success', soundEnabled);
+    await executeUpdate(updateState.info);
+  }, [soundEnabled, updateState.info]);
 
   // Celebration & Rich Details States
   const [celebrationActive, setCelebrationActive] = useState(false);
@@ -3405,6 +3437,131 @@ function App() {
                     >
                       Silencio 🔕
                     </button>
+                  </div>
+                </div>
+
+                {/* Setting Card: Versión y Actualizaciones */}
+                <div className="setting-group-card">
+                  <div className="setting-card-header">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <RefreshCw size={15} color="var(--primary-color)" />
+                      <span>Versión y Actualizaciones</span>
+                    </div>
+                    <span className="update-platform-pill">
+                      {getAppInfo().platform} • v{getAppInfo().version}
+                    </span>
+                  </div>
+
+                  <div className="update-card-content">
+                    <div className="update-info-row">
+                      <span style={{ color: 'var(--text-muted)' }}>Compilación instalada:</span>
+                      <code style={{ fontSize: '11.5px', background: 'var(--tag-bg)', padding: '2px 6px', borderRadius: '6px' }}>
+                        {getAppInfo().commit}
+                      </code>
+                    </div>
+
+                    {updateState.status === 'idle' && (
+                      <button 
+                        className="btn-update-action secondary"
+                        onClick={handleCheckUpdates}
+                      >
+                        <RefreshCw size={15} />
+                        <span>Revisar si hay actualizaciones</span>
+                      </button>
+                    )}
+
+                    {updateState.status === 'checking' && (
+                      <button 
+                        className="btn-update-action secondary"
+                        disabled
+                        style={{ opacity: 0.8 }}
+                      >
+                        <RefreshCw size={15} className="spin-animation" />
+                        <span>Buscando versión más reciente...</span>
+                      </button>
+                    )}
+
+                    {updateState.status === 'upToDate' && (
+                      <div className="update-box-result up-to-date">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '7px', fontWeight: '700' }}>
+                          <CheckCircle2 size={16} color="var(--primary-color)" />
+                          <span>¡Tu aplicación está al día!</span>
+                        </div>
+                        <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-muted)' }}>
+                          Tienes instalada la versión más reciente ({updateState.info?.currentCommit || getAppInfo().commit}).
+                        </p>
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                          <button 
+                            className="btn-update-action secondary" 
+                            style={{ padding: '8px 12px', fontSize: '12px' }}
+                            onClick={handleCheckUpdates}
+                          >
+                            <RefreshCw size={13} />
+                            <span>Volver a comprobar</span>
+                          </button>
+                          {getAppInfo().isNative && (
+                            <button 
+                              className="btn-update-action secondary" 
+                              style={{ padding: '8px 12px', fontSize: '12px' }}
+                              onClick={() => window.open(updateState.info?.apkUrl || APK_DIRECT_URL, '_system')}
+                            >
+                              <Download size={13} />
+                              <span>Descargar APK</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {updateState.status === 'available' && (
+                      <div className="update-box-result available">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '7px', fontWeight: '800', color: '#D97706' }}>
+                          <Sparkles size={16} />
+                          <span>¡Nueva versión encontrada!</span>
+                        </div>
+                        <p style={{ margin: 0, fontSize: '12px' }}>
+                          {updateState.info?.commitMessage ? (
+                            <><strong>Cambios:</strong> {updateState.info.commitMessage}</>
+                          ) : 'Hay nuevas mejoras y optimizaciones disponibles.'}
+                        </p>
+                        <button 
+                          className="btn-update-action primary"
+                          onClick={handleApplyUpdate}
+                        >
+                          {getAppInfo().isNative ? (
+                            <>
+                              <Download size={16} />
+                              <span>Descargar e Instalar APK</span>
+                            </>
+                          ) : (
+                            <>
+                              <RefreshCw size={16} />
+                              <span>Actualizar aplicación ahora</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    )}
+
+                    {updateState.status === 'error' && (
+                      <div className="update-box-result error">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '7px', fontWeight: '700', color: '#DC2626' }}>
+                          <X size={16} />
+                          <span>No se pudo comprobar</span>
+                        </div>
+                        <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-muted)' }}>
+                          {updateState.errorMsg || 'Verifica tu conexión a internet.'}
+                        </p>
+                        <button 
+                          className="btn-update-action secondary"
+                          style={{ padding: '8px 12px', fontSize: '12px' }}
+                          onClick={handleCheckUpdates}
+                        >
+                          <RefreshCw size={13} />
+                          <span>Reintentar</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
 

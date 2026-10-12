@@ -5,6 +5,9 @@ on:
     branches: [ main, master ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -45,8 +48,22 @@ jobs:
           cd android
           ./gradlew assembleDebug --stacktrace
 
+      - name: Prepare APK Release Artifact
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk android/app/build/outputs/apk/debug/EnglishLearning.apk
+
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: EnglishLearning-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: android/app/build/outputs/apk/debug/EnglishLearning.apk
+
+      - name: Publish or Update Release
+        uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/main'
+        with:
+          tag_name: latest
+          name: "English Learning - Última Versión"
+          body: "Descarga directa de la última compilación de la APK de English Learning."
+          files: android/app/build/outputs/apk/debug/EnglishLearning.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
