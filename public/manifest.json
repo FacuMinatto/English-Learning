@@ -1,15 +1,21 @@
 {
   "short_name": "English App",
-  "name": "English Learning - Repaso Espaciado",
+  "name": "English Learning",
   "icons": [
     {
-      "src": "/favicon.svg",
-      "type": "image/svg+xml",
+      "src": "./favicon.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "./pwa-512x512.png",
+      "type": "image/png",
       "sizes": "512x512",
       "purpose": "any maskable"
     }
   ],
-  "start_url": "/",
+  "start_url": "./",
   "background_color": "#0F1217",
   "theme_color": "#28C28C",
   "display": "standalone",

@@ -1372,8 +1372,14 @@ function App() {
       {/* Top Header */}
       <header className="header">
         <div className="header-top">
-          <div>
-            <h1 className="header-title">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <img 
+              src="./favicon.png" 
+              alt="English Learning Logo" 
+              style={{ width: '36px', height: '36px', borderRadius: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.2)', flexShrink: 0 }} 
+            />
+            <div>
+              <h1 className="header-title">
               {activeTab === 'daily' ? 'Repaso Diario' : 
                activeTab === 'phrases' ? 'Frases Útiles' : 
                activeTab === 'games' ? (
@@ -1409,6 +1415,7 @@ function App() {
                 )}
               </p>
             )}
+            </div>
           </div>
           <div className="header-actions">
             {/* Clickable Multi-Option Daily Streak Badge */}
