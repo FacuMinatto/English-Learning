@@ -1973,14 +1973,6 @@ function App() {
                       <span className="badge-tag">
                         <MessageCircle size={14} /> Frase {initialPhraseQueueLength > 0 ? (initialPhraseQueueLength - phraseQueue.length + 1) : 1} de {initialPhraseQueueLength || phraseQueue.length}
                       </span>
-                      <button 
-                        onClick={() => loadNewPhrases(5)}
-                        className="queue-counter"
-                        style={{ background: 'none', border: '1px solid var(--border-color)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px', borderRadius: '12px', padding: '3px 8px', color: 'var(--text-muted)' }}
-                        title="Cargar 5 frases nuevas"
-                      >
-                        <RefreshCw size={11} /> +Nuevas
-                      </button>
                       <span className="queue-counter">
                         Quedan {phraseQueue.length}
                       </span>
