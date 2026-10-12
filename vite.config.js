@@ -21,24 +21,26 @@ export default defineConfig({
     react(),
     VitePWA({ 
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'favicon.png', 'apple-touch-icon.png', 'version.json'],
+      includeAssets: ['favicon.ico', 'favicon.png', 'favicon.svg', 'apple-touch-icon.png', 'version.json'],
       manifest: {
-        name: 'English Learning App',
+        name: 'English Learning',
         short_name: 'EnglishApp',
         description: 'Aprende inglés de forma inteligente',
-        theme_color: '#28C28C',
+        theme_color: '#ffffff',
         background_color: '#ffffff',
         display: 'standalone',
         icons: [
           {
-            src: 'pwa-192x192.png',
+            src: 'pwa-192x192.png?v=4',
             sizes: '192x192',
-            type: 'image/png'
+            type: 'image/png',
+            purpose: 'any'
           },
           {
-            src: 'pwa-512x512.png',
+            src: 'pwa-512x512.png?v=4',
             sizes: '512x512',
-            type: 'image/png'
+            type: 'image/png',
+            purpose: 'any maskable'
           }
         ]
       }
