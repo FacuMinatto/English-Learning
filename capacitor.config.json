@@ -1,5 +1,9 @@
 {
   "appId": "com.englishlearning.app",
   "appName": "English Learning",
-  "webDir": "dist"
+  "webDir": "dist",
+  "server": {
+    "url": "https://facuminatto.github.io/English-Learning/",
+    "cleartext": false
+  }
 }
