@@ -1986,17 +1986,17 @@ function App() {
                       </span>
                     </div>
                     
+                    {/* Modern Active Phrase Flashcard matching the word card */}
                     <div 
-                      className={`flip-card-outer ${cardAnimClass || 'card-anim-entering'}`} 
+                      className={`main-card ${cardAnimClass || 'card-anim-entering'} ${!showPhraseTranslation ? 'main-card-clickable' : ''}`} 
                       onClick={() => {
                         if (!showPhraseTranslation) {
                           setShowPhraseTranslation(true);
                         }
                       }}
                     >
-                      <div className={`flip-card-inner ${showPhraseTranslation ? 'flipped' : ''}`}>
-                        {/* Front */}
-                        <div className="flip-card-face flip-card-front">
+                      {!showPhraseTranslation ? (
+                        <>
                           <div className="card-actions-row">
                             <button 
                               className={`card-mic-btn ${isListening ? 'mic-listening' : ''}`}
@@ -2005,6 +2005,7 @@ function App() {
                                 testPronunciation(currentPhrase.english, e);
                               }}
                               title="Practicar pronunciación (Opcional)"
+                              aria-label="Practice speaking"
                             >
                               <Mic size={18} />
                             </button>
@@ -2014,32 +2015,52 @@ function App() {
                                 e.stopPropagation();
                                 speakText(currentPhrase.english, e);
                               }}
+                              title="Escuchar pronunciación"
+                              aria-label="Listen pronunciation"
                             >
                               <Volume2 size={20} />
                             </button>
                           </div>
-                          <div className="card-word-title" style={{ fontSize: '26px' }}>
+
+                          <div 
+                            className="card-word-title" 
+                            style={{ 
+                              fontSize: 'clamp(22px, 5.8vw, 28px)', 
+                              lineHeight: 1.35, 
+                              margin: '28px 0',
+                              minHeight: '80px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                          >
                             {currentPhrase.english}
                           </div>
                           
                           {/* Voice Evaluation Feedback Chip */}
                           {speechFeedback && (
-                            <div style={{ textAlign: 'center', marginTop: '12px' }}>
+                            <div style={{ textAlign: 'center', marginBottom: '14px' }}>
                               <span className={`speech-feedback-chip ${speechFeedback.success ? 'feedback-success' : 'feedback-trying'}`}>
                                 {speechFeedback.text}
                               </span>
                             </div>
                           )}
 
-                          <div style={{ marginTop: 'auto', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', color: 'var(--text-muted)', fontWeight: '600' }}>
-                            <span>Toca para ver traducción</span>
-                            <RotateCcw size={14} />
-                          </div>
-                        </div>
-                        
-                        {/* Back */}
-                        <div className="flip-card-face flip-card-back">
-                          <div className="phrase-comparison-container" onClick={(e) => e.stopPropagation()}>
+                          <button 
+                            className="btn-primary" 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setShowPhraseTranslation(true);
+                            }}
+                            style={{ width: '100%', marginTop: 'auto' }}
+                          >
+                            Mostrar Respuesta
+                          </button>
+                        </>
+                      ) : (
+                        <div className="translation-reveal-area" style={{ borderTop: 'none', paddingTop: 0 }} onClick={(e) => e.stopPropagation()}>
+                          {/* Dual Phrase Comparison Container */}
+                          <div className="phrase-comparison-container">
                             {/* English Phrase with audio and mic */}
                             <div className="phrase-comparison-item phrase-comparison-en-item">
                               <div className="phrase-comparison-badge-row">
@@ -2094,22 +2115,19 @@ function App() {
 
                           {/* Voice Evaluation Feedback Chip */}
                           {speechFeedback && (
-                            <div style={{ textAlign: 'center', margin: '4px 0' }}>
+                            <div style={{ textAlign: 'center', margin: '10px 0 4px' }}>
                               <span className={`speech-feedback-chip ${speechFeedback.success ? 'feedback-success' : 'feedback-trying'}`}>
                                 {speechFeedback.text}
                               </span>
                             </div>
                           )}
 
-
-                          
-                          <div className="flashcard-author-watermark">
+                          <div className="flashcard-author-watermark" style={{ margin: '14px 0 10px' }}>
                             <a 
                               href={LINKEDIN_PROFILE_URL}
                               target="_blank" 
                               rel="noopener noreferrer"
                               style={{ color: 'inherit', textDecoration: 'none' }}
-                              onClick={(e) => e.stopPropagation()}
                             >
                               Hecha por <strong>Facundo Minatto</strong>
                             </a>
@@ -2119,7 +2137,7 @@ function App() {
                             const currentProg = phraseProgress[currentPhrase.id];
                             const intervals = getIntervals(currentProg?.interval || 0);
                             return (
-                              <div className="rating-buttons-grid" onClick={(e) => e.stopPropagation()}>
+                              <div className="rating-buttons-grid">
                                 <button 
                                   className="btn-rating-pill rating-again" 
                                   onClick={() => handleRating(intervals.again, true)}
@@ -2152,7 +2170,7 @@ function App() {
                             );
                           })()}
                         </div>
-                      </div>
+                      )}
                     </div>
                   </>
                 );
