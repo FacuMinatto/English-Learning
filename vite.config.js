@@ -8,7 +8,7 @@ import fs from 'fs'
 let currentGitCommit = '1a9d629'
 try {
   currentGitCommit = execSync('git rev-parse --short HEAD').toString().trim()
-} catch (e) {}
+} catch {}
 
 const buildDate = new Date().toISOString()
 
@@ -21,7 +21,7 @@ try {
     releasesUrl: 'https://github.com/FacuMinatto/English-Learning/releases'
   }
   fs.writeFileSync('./public/version.json', JSON.stringify(versionPayload, null, 2))
-} catch (e) {}
+} catch {}
 
 export default defineConfig({
   base: './',
@@ -29,6 +29,24 @@ export default defineConfig({
     __APP_VERSION__: JSON.stringify('1.3.1'),
     __GIT_COMMIT__: JSON.stringify(currentGitCommit),
     __BUILD_DATE__: JSON.stringify(buildDate)
+  },
+  build: {
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules/firebase')) {
+            return 'vendor-firebase';
+          }
+          if (id.includes('node_modules/lucide-react')) {
+            return 'vendor-icons';
+          }
+          if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/') || id.includes('node_modules/zustand/')) {
+            return 'vendor-react';
+          }
+        }
+      }
+    }
   },
   plugins: [
     react(),

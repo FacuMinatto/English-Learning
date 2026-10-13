@@ -117,7 +117,7 @@ export async function checkAppUpdates() {
             };
           }
         }
-      } catch (swErr) {}
+      } catch {}
     }
 
     return {
@@ -151,12 +151,12 @@ export async function executeUpdate(updateInfo) {
         }
         await reg.update();
       }
-    } catch (e) {}
+    } catch {}
   }
 
   if (typeof window !== 'undefined') {
     setTimeout(() => {
-      window.location.reload(true);
+      window.location.reload();
     }, 400);
   }
 }

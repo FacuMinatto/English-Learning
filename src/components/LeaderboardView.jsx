@@ -1,5 +1,5 @@
 // src/components/LeaderboardView.jsx
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Users, 
   Globe, 
@@ -39,37 +39,38 @@ export default function LeaderboardView({ streakCount = 0, wordsMastered = 0, ph
   const [friendInput, setFriendInput] = useState('');
   const [copySuccess, setCopySuccess] = useState(false);
   const [friendFeedback, setFriendFeedback] = useState('');
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  // Sincronizar y recargar datos del ranking
-  const loadLeaderboardData = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      // 1. Sincronizar nuestro puntaje más reciente
-      const myScore = await syncUserProgress({
-        streak: streakCount,
-        wordsMastered,
-        phrasesMastered,
-        todayActivities
-      });
-
-      // 2. Obtener la lista según la pestaña activa
-      if (activeSubTab === 'global') {
-        const list = await getGlobalLeaderboard(myScore);
-        setLeaderboardList(list);
-      } else {
-        const list = await getFriendsLeaderboard(myScore);
-        setLeaderboardList(list);
-      }
-    } catch (err) {
-      console.warn('Error loading leaderboard:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [activeSubTab, streakCount, wordsMastered, phrasesMastered, todayActivities]);
-
+  // Sincronizar y recargar datos del ranking con ciclo cancelable
   useEffect(() => {
-    loadLeaderboardData();
-  }, [loadLeaderboardData]);
+    let ignore = false;
+    const fetchLeaderboard = async () => {
+      try {
+        const myScore = await syncUserProgress({
+          streak: streakCount,
+          wordsMastered,
+          phrasesMastered,
+          todayActivities
+        });
+        if (ignore) return;
+        const list = activeSubTab === 'global'
+          ? await getGlobalLeaderboard(myScore)
+          : await getFriendsLeaderboard(myScore);
+        if (!ignore) {
+          setLeaderboardList(list);
+        }
+      } catch (err) {
+        console.warn('Error loading leaderboard:', err);
+      } finally {
+        if (!ignore) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchLeaderboard();
+    return () => { ignore = true; };
+  }, [activeSubTab, streakCount, wordsMastered, phrasesMastered, todayActivities, refreshTrigger]);
 
   // Manejar compartir enlace de amigo
   const handleShareProfile = async () => {
@@ -102,7 +103,7 @@ export default function LeaderboardView({ streakCount = 0, wordsMastered = 0, ph
     const updated = await saveUserProfile(tempName, tempAvatar);
     setProfile(updated);
     setShowEditProfile(false);
-    loadLeaderboardData();
+    setRefreshTrigger(k => k + 1);
   };
 
   // Agregar amigo manualmente por ID o Nombre
@@ -136,7 +137,7 @@ export default function LeaderboardView({ streakCount = 0, wordsMastered = 0, ph
 
     setFriendInput('');
     if (activeSubTab === 'friends') {
-      loadLeaderboardData();
+      setRefreshTrigger(k => k + 1);
     } else {
       setActiveSubTab('friends');
     }
@@ -162,14 +163,26 @@ export default function LeaderboardView({ streakCount = 0, wordsMastered = 0, ph
       <div className="leaderboard-segmented-tabs">
         <button 
           className={`leaderboard-tab-btn ${activeSubTab === 'global' ? 'active' : ''}`}
-          onClick={() => { setActiveSubTab('global'); triggerHaptic(15); }}
+          onClick={() => {
+            if (activeSubTab !== 'global') {
+              setIsLoading(true);
+              setActiveSubTab('global');
+              triggerHaptic(15);
+            }
+          }}
         >
           <Globe size={16} />
           <span>Ranking Global</span>
         </button>
         <button 
           className={`leaderboard-tab-btn ${activeSubTab === 'friends' ? 'active' : ''}`}
-          onClick={() => { setActiveSubTab('friends'); triggerHaptic(15); }}
+          onClick={() => {
+            if (activeSubTab !== 'friends') {
+              setIsLoading(true);
+              setActiveSubTab('friends');
+              triggerHaptic(15);
+            }
+          }}
         >
           <Users size={16} />
           <span>Mis Amigos ({getSavedFriends().length})</span>

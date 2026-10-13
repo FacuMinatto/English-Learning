@@ -24,7 +24,7 @@ const migrateOldProgress = async () => {
     if (hasOldData && !localStorage.getItem('app-progress-storage')) {
       const payload = JSON.stringify({ state: migrated, version: 0 });
       localStorage.setItem('app-progress-storage', payload);
-      try { await Preferences.set({ key: 'app-progress-storage', value: payload }); } catch(e) {}
+      try { await Preferences.set({ key: 'app-progress-storage', value: payload }); } catch {}
       useProgressStore.setState(migrated);
       return;
     }
@@ -40,7 +40,7 @@ const migrateOldProgress = async () => {
           (parsedLocal.state.phraseProgress && Object.keys(parsedLocal.state.phraseProgress).length > 0) ||
           (parsedLocal.state.streakData?.count > 1)
         );
-      } catch(e) {}
+      } catch {}
     }
 
     if (!hasActiveLocalData) {
@@ -56,14 +56,14 @@ const migrateOldProgress = async () => {
             useProgressStore.setState(parsedPref.state);
           }
         }
-      } catch(e) {}
+      } catch {}
     } else {
       // Mirror active local progress to native Preferences for safekeeping
       try {
         await Preferences.set({ key: 'app-progress-storage', value: currentLocal });
-      } catch(e) {}
+      } catch {}
     }
-  } catch(e) {}
+  } catch {}
 };
 
 // Run migration synchronously for immediate localStorage check
@@ -80,7 +80,7 @@ try {
     if (cWords) migrated.customWords = JSON.parse(cWords);
     localStorage.setItem('app-progress-storage', JSON.stringify({ state: migrated, version: 0 }));
   }
-} catch(e) {}
+} catch {}
 
 export const useProgressStore = create(
   persist(
@@ -146,7 +146,7 @@ useProgressStore.subscribe((state) => {
       version: 0
     });
     Preferences.set({ key: 'app-progress-storage', value: payload }).catch(() => {});
-  } catch(e) {}
+  } catch {}
 });
 
 // Run async check & recovery on app start

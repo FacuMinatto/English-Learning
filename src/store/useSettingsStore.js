@@ -28,7 +28,7 @@ const migrateOldSettings = async () => {
     if (hasOldData && !localStorage.getItem('app-settings-storage')) {
       const payload = JSON.stringify({ state: migrated, version: 0 });
       localStorage.setItem('app-settings-storage', payload);
-      try { await Preferences.set({ key: 'app-settings-storage', value: payload }); } catch(e) {}
+      try { await Preferences.set({ key: 'app-settings-storage', value: payload }); } catch {}
       useSettingsStore.setState(migrated);
       return;
     }
@@ -45,13 +45,13 @@ const migrateOldSettings = async () => {
             useSettingsStore.setState(parsed.state);
           }
         }
-      } catch(e) {}
+      } catch {}
     } else {
       try {
         await Preferences.set({ key: 'app-settings-storage', value: currentLocal });
-      } catch(e) {}
+      } catch {}
     }
-  } catch(e) {}
+  } catch {}
 };
 
 // Immediate synchronous migration for legacy keys
@@ -76,7 +76,7 @@ try {
   if (hasOldData && !localStorage.getItem('app-settings-storage')) {
     localStorage.setItem('app-settings-storage', JSON.stringify({ state: migrated, version: 0 }));
   }
-} catch(e) {}
+} catch {}
 
 export const useSettingsStore = create(
   persist(
@@ -133,7 +133,7 @@ useSettingsStore.subscribe((state) => {
       version: 0
     });
     Preferences.set({ key: 'app-settings-storage', value: payload }).catch(() => {});
-  } catch(e) {}
+  } catch {}
 });
 
 // Run async check on load

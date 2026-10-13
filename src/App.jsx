@@ -244,7 +244,7 @@ function App() {
       } else {
         setUpdateState({ status: 'upToDate', info: res, errorMsg: '' });
       }
-    } catch (e) {
+    } catch {
       setUpdateState({ status: 'error', info: null, errorMsg: 'Error al comprobar actualizaciones.' });
     }
   }, [soundEnabled]);
@@ -278,7 +278,7 @@ function App() {
       } else {
         try {
           await CapacitorApp.exitApp();
-        } catch (e) {
+        } catch {
           // Ignore if not native
         }
       }
@@ -349,8 +349,12 @@ function App() {
     });
   }, [themeColor, isDarkActive]);
 
-
-
+  // Periodic review clock: keeps review counts and overdue cards automatically synchronized
+  const [currentTimestamp, setCurrentTimestamp] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTimestamp(Date.now()), 60000);
+    return () => clearInterval(timer);
+  }, []);
 
   const triggerConfetti = useCallback(() => {
     confetti({ 
@@ -685,7 +689,7 @@ function App() {
       if (typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform && Capacitor.isNativePlatform()) {
         await TextToSpeech.stop();
       }
-    } catch (e) {}
+    } catch {}
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
@@ -1405,7 +1409,7 @@ function App() {
       if (typeof navigator !== 'undefined' && navigator.clipboard?.readText) {
         try {
           text = await navigator.clipboard.readText();
-        } catch (e) {}
+        } catch {}
       }
       if (!text || !text.trim().startsWith('{')) {
         text = prompt('Pega aquí el código/texto de tu copia de seguridad JSON:');
@@ -1443,7 +1447,7 @@ function App() {
   // High-Performance Filtering with Category & Sorting support
   const filteredDictionary = useMemo(() => {
     const term = debouncedSearchTerm.trim().toLowerCase();
-    const now = Date.now();
+    const now = currentTimestamp;
 
     let list = fullDictionary.filter(word => {
       if (categoryFilter === 'scheduled') {
@@ -1484,7 +1488,7 @@ function App() {
     }
 
     return list;
-  }, [debouncedSearchTerm, fullDictionary, categoryFilter, wordProgress, dictSortOrder, randomSeed]);
+  }, [debouncedSearchTerm, fullDictionary, categoryFilter, wordProgress, dictSortOrder, randomSeed, currentTimestamp]);
 
   // Paginated slice for instant 60/120fps rendering
   const displayedWords = useMemo(() => {
@@ -1502,7 +1506,7 @@ function App() {
 
   // Single-pass memoized metrics calculation (cuts 7,000+ iterations per render)
   const { scheduledCount, dueReviewCount, duePhraseCount } = useMemo(() => {
-    const now = Date.now();
+    const now = currentTimestamp;
     let sched = 0;
     let dueW = 0;
     for (let i = 0; i < fullDictionary.length; i++) {
@@ -1518,7 +1522,7 @@ function App() {
       if (p && p.nextReview <= now) dueP++;
     }
     return { scheduledCount: sched, dueReviewCount: dueW, duePhraseCount: dueP };
-  }, [fullDictionary, wordProgress, phraseProgress]);
+  }, [fullDictionary, wordProgress, phraseProgress, currentTimestamp]);
 
   return (
     <div className="app-container">
