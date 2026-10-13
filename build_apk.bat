@@ -21,9 +21,11 @@ call gradlew.bat assembleDebug
 echo [5/5] Checking generated APK...
 if exist "app\build\outputs\apk\debug\app-debug.apk" (
     copy /y "app\build\outputs\apk\debug\app-debug.apk" "C:\Users\facum\OneDrive\Escritorio\APPs IA\EnglishLearning.apk"
+    copy /y "app\build\outputs\apk\debug\app-debug.apk" "C:\Users\facum\OneDrive\Escritorio\APPs IA\EnglishLearning\public\EnglishLearning.apk"
     echo ========================================================
     echo SUCCESS! APK created at:
     echo C:\Users\facum\OneDrive\Escritorio\APPs IA\EnglishLearning.apk
+    echo and public\EnglishLearning.apk
     echo ========================================================
 ) else (
     echo Build failed. Check gradle log above.

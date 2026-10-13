@@ -5,7 +5,7 @@ export const APP_COMMIT = typeof __GIT_COMMIT__ !== 'undefined' ? __GIT_COMMIT__
 export const APP_BUILD_DATE = typeof __BUILD_DATE__ !== 'undefined' ? __BUILD_DATE__ : '';
 
 export const GITHUB_REPO = 'FacuMinatto/English-Learning';
-export const APK_DIRECT_URL = 'https://github.com/FacuMinatto/English-Learning/releases/latest/download/EnglishLearning.apk';
+export const APK_DIRECT_URL = 'https://facuminatto.github.io/English-Learning/EnglishLearning.apk';
 export const GITHUB_RELEASES_URL = 'https://github.com/FacuMinatto/English-Learning/releases';
 export const REMOTE_VERSION_URL = 'https://facuminatto.github.io/English-Learning/version.json';
 
