@@ -549,6 +549,61 @@ export const wordKnowledge = {
     explanation: "Como adverbio significa 'incluso / hasta' para enfatizar algo sorprendente. Como adjetivo matemático significa 'par' (número par) o 'nivelado'.",
     exampleEn: "Even ten minutes a day creates huge language improvement over a year.",
     exampleEs: "Incluso diez minutos al día generan una enorme mejora en el idioma a lo largo de un año."
+  },
+  // --- FRASES Y MODISMOS FRECUENTES ---
+  "Let's call it a day": {
+    category: "🗣️ Modismo & Trabajo",
+    explanation: "Se usa para proponer dar por finalizada la jornada laboral, de estudio o cualquier actividad grupal por el día de hoy.",
+    exampleEn: "We've fixed the main issue and it's getting late, so let's call it a day.",
+    exampleEs: "Ya solucionamos el problema principal y se está haciendo tarde, así que terminemos por hoy."
+  },
+  "Call it a day": {
+    category: "🗣️ Modismo & Trabajo",
+    explanation: "Expresión común para indicar que se detiene el trabajo o esfuerzo hasta el día siguiente.",
+    exampleEn: "After five hours of studying, I decided to call it a day.",
+    exampleEs: "Después de cinco horas de estudio, decidí dar el día por terminado."
+  },
+  "Take your time": {
+    category: "☕ Conversación Cotidiana",
+    explanation: "Expresión de cortesía para decirle a alguien que no se apresure, que haga las cosas con calma y a su propio ritmo.",
+    exampleEn: "Take your time reading the document; there is no rush.",
+    exampleEs: "Tómate tu tiempo para leer el documento; no hay ningún apuro."
+  },
+  "How are you doing?": {
+    category: "☕ Saludos Cotidianos",
+    explanation: "Saludo informal muy natural en inglés para preguntar cómo está alguien o cómo van sus cosas.",
+    exampleEn: "Hey, how are you doing? Long time no see!",
+    exampleEs: "¡Hola! ¿Cómo andás? ¡Tanto tiempo sin vernos!"
+  },
+  "I appreciate it": {
+    category: "🤝 Agradecimiento",
+    explanation: "Forma cálida y sincera de decir 'te lo agradezco', más expresiva que un simple 'thank you'.",
+    exampleEn: "Thanks for helping me with this task, I really appreciate it.",
+    exampleEs: "Gracias por ayudarme con esta tarea, de verdad te lo agradezco."
+  },
+  "Let's catch up soon": {
+    category: "☕ Encuentros y Amistad",
+    explanation: "'Catch up' significa ponerse al día con alguien contándose novedades personales o profesionales.",
+    exampleEn: "It was great running into you, let's catch up soon over coffee.",
+    exampleEs: "Fue genial cruzarte, pongámonos al día pronto tomando un café."
+  },
+  "I'll be right back": {
+    category: "☕ Expresión Común",
+    explanation: "Indica que la persona se ausenta por unos instantes o minutos y regresará de inmediato.",
+    exampleEn: "Wait for me here, I'll be right back with the tickets.",
+    exampleEs: "Espérame acá, ya vuelvo con las entradas."
+  },
+  "Sleep on it": {
+    category: "🧠 Toma de Decisiones",
+    explanation: "Metáfora para postergar una decisión importante hasta la mañana siguiente para pensarla con la mente descansada.",
+    exampleEn: "Don't sign the contract right away; sleep on it tonight.",
+    exampleEs: "No firmes el contrato de inmediato; consúltalo con la almohada esta noche."
+  },
+  "Piece of cake": {
+    category: "🍰 Expresión Idiomática",
+    explanation: "Indica que una tarea, examen o situación es sumamente fácil o sencilla de realizar.",
+    exampleEn: "Don't worry about the quiz, you studied hard so it'll be a piece of cake.",
+    exampleEs: "No te preocupes por el cuestionario, estudiaste mucho así que será pan comido."
   }
 };
 
@@ -1735,9 +1790,10 @@ export function getWordDetails(wordObj) {
   const esp = wordObj.spanish || '';
   const cleanEn = eng.trim();
   const lowerEn = cleanEn.toLowerCase();
+  const normalizedEn = lowerEn.replace(/[.,!?;:]+$/, '').trim();
 
-  const phrasalEntry = lowerPhrasalKnowledge.get(lowerEn) || null;
-  const foundKnowledge = lowerWordKnowledge.get(lowerEn);
+  const phrasalEntry = lowerPhrasalKnowledge.get(lowerEn) || lowerPhrasalKnowledge.get(normalizedEn) || null;
+  const foundKnowledge = lowerWordKnowledge.get(lowerEn) || lowerWordKnowledge.get(normalizedEn);
 
   let category = '';
   if (foundKnowledge && foundKnowledge.category) {

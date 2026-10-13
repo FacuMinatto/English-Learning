@@ -1669,34 +1669,49 @@ function App() {
                         }
                       }}
                     >
-                      <div className="card-actions-row">
+                      <div className="card-actions-row" style={{ justifyContent: showStudyTranslation ? 'space-between' : 'flex-end', alignItems: 'center' }}>
+                        {showStudyTranslation && (
+                          <button 
+                            className="card-toggle-answer-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setShowStudyTranslation(false);
+                            }}
+                            title="Ocultar respuesta y volver a la palabra en inglés"
+                            aria-label="Volver a inglés"
+                          >
+                            <RotateCcw size={13} />
+                            <span>Volver a inglés</span>
+                          </button>
+                        )}
 
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                          {/* Optional Pronunciation Microphone */}
+                          <button 
+                            className={`card-mic-btn ${isListening ? 'mic-listening' : ''}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              testPronunciation(studyQueue[0].english, e);
+                            }}
+                            title="Practicar pronunciación (Opcional)"
+                            aria-label="Practice speaking"
+                          >
+                            <Mic size={18} />
+                          </button>
 
-                        {/* Optional Pronunciation Microphone */}
-                        <button 
-                          className={`card-mic-btn ${isListening ? 'mic-listening' : ''}`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            testPronunciation(studyQueue[0].english, e);
-                          }}
-                          title="Practicar pronunciación (Opcional)"
-                          aria-label="Practice speaking"
-                        >
-                          <Mic size={18} />
-                        </button>
-
-                        {/* Speaker Button */}
-                        <button 
-                          className={`card-audio-btn ${isPlayingAudio ? 'audio-playing' : ''}`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            speakText(studyQueue[0].english, e);
-                          }}
-                          title="Escuchar pronunciación"
-                          aria-label="Listen pronunciation"
-                        >
-                          <Volume2 size={20} />
-                        </button>
+                          {/* Speaker Button */}
+                          <button 
+                            className={`card-audio-btn ${isPlayingAudio ? 'audio-playing' : ''}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              speakText(studyQueue[0].english, e);
+                            }}
+                            title="Escuchar pronunciación"
+                            aria-label="Listen pronunciation"
+                          >
+                            <Volume2 size={20} />
+                          </button>
+                        </div>
                       </div>
 
                       {(() => {
@@ -2091,148 +2106,139 @@ function App() {
                         }
                       }}
                     >
-                      {!showPhraseTranslation ? (
-                        <>
-                          <div className="card-actions-row">
-                            <button 
-                              className={`card-mic-btn ${isListening ? 'mic-listening' : ''}`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                testPronunciation(currentPhrase.english, e);
-                              }}
-                              title="Practicar pronunciación (Opcional)"
-                              aria-label="Practice speaking"
-                            >
-                              <Mic size={18} />
-                            </button>
-                            <button 
-                              className={`card-audio-btn ${isPlayingAudio ? 'audio-playing' : ''}`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                speakText(currentPhrase.english, e);
-                              }}
-                              title="Escuchar pronunciación"
-                              aria-label="Listen pronunciation"
-                            >
-                              <Volume2 size={20} />
-                            </button>
-                          </div>
-
-                          <div 
-                            className="card-word-title" 
-                            style={{ 
-                              fontSize: 'clamp(22px, 5.8vw, 28px)', 
-                              lineHeight: 1.35, 
-                              margin: '28px 0',
-                              minHeight: '80px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center'
-                            }}
-                          >
-                            {currentPhrase.english}
-                          </div>
-                          
-                          {/* Voice Evaluation Feedback Chip */}
-                          {speechFeedback && (
-                            <div style={{ textAlign: 'center', marginBottom: '14px' }}>
-                              <span className={`speech-feedback-chip ${speechFeedback.success ? 'feedback-success' : 'feedback-trying'}`}>
-                                {speechFeedback.text}
-                              </span>
-                            </div>
-                          )}
-
+                      <div className="card-actions-row" style={{ justifyContent: showPhraseTranslation ? 'space-between' : 'flex-end', alignItems: 'center' }}>
+                        {showPhraseTranslation && (
                           <button 
-                            className="btn-primary" 
+                            className="card-toggle-answer-btn"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setShowPhraseTranslation(true);
+                              setShowPhraseTranslation(false);
                             }}
-                            style={{ width: '100%', marginTop: 'auto' }}
+                            title="Ocultar respuesta y volver a la frase en inglés"
+                            aria-label="Volver a inglés"
                           >
-                            Mostrar Respuesta
+                            <RotateCcw size={13} />
+                            <span>Volver a inglés</span>
                           </button>
-                        </>
-                      ) : (
-                        <div className="translation-reveal-area" style={{ borderTop: 'none', paddingTop: 0 }} onClick={(e) => e.stopPropagation()}>
-                          {/* Dual Phrase Comparison Container */}
-                          <div className="phrase-comparison-container">
-                            {/* English Phrase with audio and mic */}
-                            <div className="phrase-comparison-item phrase-comparison-en-item">
-                              <div className="phrase-comparison-badge-row">
-                                <span className="phrase-comparison-badge">Inglés</span>
-                                <div className="phrase-comparison-actions">
-                                  <button 
-                                    className={`card-mic-btn-mini ${isListening ? 'mic-listening' : ''}`}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      testPronunciation(currentPhrase.english, e);
-                                    }}
-                                    title="Practicar pronunciación"
-                                    aria-label="Practice speaking"
-                                  >
-                                    <Mic size={14} />
-                                  </button>
-                                  <button 
-                                    className={`card-audio-btn-mini ${isPlayingAudio ? 'audio-playing' : ''}`}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      speakText(currentPhrase.english, e);
-                                    }}
-                                    title="Escuchar en inglés"
-                                    aria-label="Listen English phrase"
-                                  >
-                                    <Volume2 size={15} />
-                                  </button>
-                                </div>
-                              </div>
-                              <div className="phrase-comparison-text phrase-comparison-en-text">
-                                {currentPhrase.english}
-                              </div>
-                            </div>
+                        )}
 
-                            {/* Divider */}
-                            <div className="phrase-comparison-divider">
-                              <span className="phrase-comparison-divider-line"></span>
-                              <span className="phrase-comparison-divider-tag">Traducción</span>
-                              <span className="phrase-comparison-divider-line"></span>
-                            </div>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                          <button 
+                            className={`card-mic-btn ${isListening ? 'mic-listening' : ''}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              testPronunciation(currentPhrase.english, e);
+                            }}
+                            title="Practicar pronunciación (Opcional)"
+                            aria-label="Practice speaking"
+                          >
+                            <Mic size={18} />
+                          </button>
 
-                            {/* Spanish Translation */}
-                            <div className="phrase-comparison-item phrase-comparison-es-item">
-                              <div className="phrase-comparison-badge-row">
-                                <span className="phrase-comparison-badge phrase-comparison-badge-es">Español</span>
-                              </div>
-                              <div className="phrase-comparison-text phrase-comparison-es-text">
+                          <button 
+                            className={`card-audio-btn ${isPlayingAudio ? 'audio-playing' : ''}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              speakText(currentPhrase.english, e);
+                            }}
+                            title="Escuchar pronunciación"
+                            aria-label="Listen pronunciation"
+                          >
+                            <Volume2 size={20} />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div 
+                        className="card-word-title" 
+                        style={{ 
+                          fontSize: 'clamp(23px, 6vw, 29px)', 
+                          lineHeight: 1.35, 
+                          margin: '18px 0 16px',
+                          cursor: showPhraseTranslation ? 'pointer' : 'default',
+                          textAlign: 'center'
+                        }}
+                        onClick={(e) => {
+                          if (showPhraseTranslation) {
+                            e.stopPropagation();
+                            setShowPhraseTranslation(false);
+                          }
+                        }}
+                        title={showPhraseTranslation ? "Toca para volver a la frase en inglés" : undefined}
+                      >
+                        {currentPhrase.english}
+                      </div>
+                      
+                      {/* Voice Evaluation Feedback Chip */}
+                      {speechFeedback && (
+                        <div style={{ textAlign: 'center', marginBottom: '14px' }}>
+                          <span className={`speech-feedback-chip ${speechFeedback.success ? 'feedback-success' : 'feedback-trying'}`}>
+                            {speechFeedback.text}
+                          </span>
+                        </div>
+                      )}
+
+                      {showPhraseTranslation ? (
+                        (() => {
+                          const currentProg = phraseProgress[currentPhrase.id];
+                          const intervals = getIntervals(currentProg?.interval || 0);
+                          const details = getWordDetails(currentPhrase);
+
+                          return (
+                            <div className="translation-reveal-area">
+                              <div className="card-translation" style={{ fontSize: 'clamp(19px, 5.5vw, 24px)', margin: '4px 0 14px' }}>
                                 {currentPhrase.spanish}
                               </div>
-                            </div>
-                          </div>
 
-                          {/* Voice Evaluation Feedback Chip */}
-                          {speechFeedback && (
-                            <div style={{ textAlign: 'center', margin: '10px 0 4px' }}>
-                              <span className={`speech-feedback-chip ${speechFeedback.success ? 'feedback-success' : 'feedback-trying'}`}>
-                                {speechFeedback.text}
-                              </span>
-                            </div>
-                          )}
+                              {/* Category Badge */}
+                              <div style={{ textAlign: 'center', margin: '4px 0 12px' }}>
+                                <span className="word-category-badge">{details.category || "🗣️ Expresión / Frase"}</span>
+                              </div>
 
-                          <div className="flashcard-author-watermark" style={{ margin: '14px 0 10px' }}>
-                            <a 
-                              href={LINKEDIN_PROFILE_URL}
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              style={{ color: 'inherit', textDecoration: 'none' }}
-                            >
-                              Hecha por <strong>Facundo Minatto</strong>
-                            </a>
-                          </div>
-                          
-                          {(() => {
-                            const currentProg = phraseProgress[currentPhrase.id];
-                            const intervals = getIntervals(currentProg?.interval || 0);
-                            return (
+                              {/* Rich Meaning / Explanation Box */}
+                              {details.explanation && (
+                                <div className="explanation-box" style={{ margin: '14px 0 16px' }}>
+                                  <div className="explanation-header">
+                                    <Sparkles size={13} />
+                                    <span>¿Cuándo se usa?</span>
+                                  </div>
+                                  <p className="explanation-text">{details.explanation}</p>
+                                </div>
+                              )}
+
+                              {/* Authentic Context Example Box */}
+                              {details.exampleEn && (
+                                <div className="example-sentence-box" style={{ margin: '14px 0 16px' }}>
+                                  <div className="example-sentence-header">
+                                    <span>Ejemplo en inglés:</span>
+                                  </div>
+                                  <div className="example-sentence-en">
+                                    <span>"{details.exampleEn}"</span>
+                                    <button 
+                                      onClick={(e) => speakText(details.exampleEn, e)}
+                                      className="example-speak-btn"
+                                      title="Escuchar frase completa"
+                                    >
+                                      <Volume2 size={15} />
+                                    </button>
+                                  </div>
+                                  <div className="example-sentence-es">
+                                    {details.exampleEs}
+                                  </div>
+                                </div>
+                              )}
+
+                              <div className="flashcard-author-watermark" style={{ margin: '16px 0 12px' }}>
+                                <a 
+                                  href={LINKEDIN_PROFILE_URL}
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  style={{ color: 'inherit', textDecoration: 'none' }}
+                                >
+                                  Hecha por <strong>Facundo Minatto</strong>
+                                </a>
+                              </div>
+                              
                               <div className="rating-buttons-grid">
                                 <button 
                                   className="btn-rating-pill rating-again" 
@@ -2263,9 +2269,20 @@ function App() {
                                   <span className="interval-badge">{formatInterval(intervals.easy)}</span>
                                 </button>
                               </div>
-                            );
-                          })()}
-                        </div>
+                            </div>
+                          );
+                        })()
+                      ) : (
+                        <button 
+                          className="btn-primary" 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowPhraseTranslation(true);
+                          }}
+                          style={{ width: '100%', marginTop: 'auto' }}
+                        >
+                          Mostrar Respuesta
+                        </button>
                       )}
                     </div>
                   </>
