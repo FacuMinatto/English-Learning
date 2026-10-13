@@ -190,33 +190,8 @@ export function removeFriendLocally(userId) {
 }
 
 /**
- * Simulación de comunidad activa realista si Firebase aún no fue conectado
- */
-function getSimulatedCommunity(myScore) {
-  const baseSimulated = [
-    { userId: 'sim_1', name: 'Facu Minatto 👑', avatar: '🦁', streak: 12, xp: Math.max(2250, (myScore?.xp || 0) + 420), wordsMastered: 110, phrasesMastered: 45 },
-    { userId: 'sim_2', name: 'Santi Dev', avatar: '🚀', streak: 9, xp: Math.max(1840, (myScore?.xp || 0) + 150), wordsMastered: 92, phrasesMastered: 35 },
-    { userId: 'sim_3', name: 'Elena R.', avatar: '🦉', streak: 7, xp: Math.max(1420, (myScore?.xp || 0) - 80), wordsMastered: 74, phrasesMastered: 28 },
-    { userId: 'sim_4', name: 'Lucas_English', avatar: '⚡', streak: 5, xp: Math.max(1150, (myScore?.xp || 0) - 220), wordsMastered: 60, phrasesMastered: 20 },
-    { userId: 'sim_5', name: 'Sofía M.', avatar: '🦊', streak: 4, xp: Math.max(980, (myScore?.xp || 0) - 350), wordsMastered: 52, phrasesMastered: 16 },
-    { userId: 'sim_6', name: 'Martín B.', avatar: '☕', streak: 3, xp: Math.max(760, (myScore?.xp || 0) - 490), wordsMastered: 40, phrasesMastered: 12 },
-    { userId: 'sim_7', name: 'Camila G.', avatar: '💎', streak: 2, xp: Math.max(540, (myScore?.xp || 0) - 620), wordsMastered: 30, phrasesMastered: 10 }
-  ];
-
-  // Insertar al usuario actual
-  const all = [...baseSimulated];
-  if (myScore) {
-    const existingIdx = all.findIndex(u => u.userId === myScore.userId);
-    if (existingIdx >= 0) all[existingIdx] = myScore;
-    else all.push(myScore);
-  }
-
-  // Ordenar por XP descendente
-  return all.sort((a, b) => (b.xp || 0) - (a.xp || 0));
-}
-
-/**
  * Obtiene el Ranking Global
+ * Retorna únicamente usuarios reales registrados en Firebase (o el usuario actual).
  */
 export async function getGlobalLeaderboard(myScore) {
   if (isConfigured && db) {
@@ -235,11 +210,12 @@ export async function getGlobalLeaderboard(myScore) {
 
       return list.sort((a, b) => (b.xp || 0) - (a.xp || 0));
     } catch (err) {
-      console.warn('[Leaderboard] Fallback a datos locales:', err);
+      console.warn('[Leaderboard] Error al consultar ranking global en Firebase:', err);
     }
   }
 
-  return getSimulatedCommunity(myScore);
+  // Sin usuarios simulados: solo el usuario actual si no hay conexión o no hay más usuarios
+  return myScore ? [myScore] : [];
 }
 
 /**
@@ -258,7 +234,7 @@ export async function getFriendsLeaderboard(myScore) {
           if (docSnap.exists()) {
             list.push({ ...docSnap.data(), userId: docSnap.id });
           } else {
-            list.push({ userId: f.userId, name: f.name, avatar: f.avatar, xp: 100, streak: 1 });
+            list.push({ userId: f.userId, name: f.name, avatar: f.avatar, xp: 0, streak: 0 });
           }
         } catch {}
       }
@@ -273,13 +249,13 @@ export async function getFriendsLeaderboard(myScore) {
     }
   }
 
-  // Fallback local
+  // Fallback local: amigos reales agregados por el usuario
   const localList = friends.map(f => ({
     userId: f.userId,
     name: f.name,
     avatar: f.avatar,
-    xp: 350,
-    streak: 3
+    xp: f.xp || 0,
+    streak: f.streak || 0
   }));
 
   if (myScore) localList.push(myScore);

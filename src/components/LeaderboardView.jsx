@@ -268,13 +268,17 @@ export default function LeaderboardView({ streakCount = 0, wordsMastered = 0, ph
             </div>
           )}
 
-          {/* Banner when in friends tab with 1 user */}
-          {activeSubTab === 'friends' && leaderboardList.length === 1 && (
+          {/* Banner when only 1 user */}
+          {leaderboardList.length === 1 && (
             <div className="invite-friends-banner">
               <span className="invite-banner-emoji">🚀</span>
               <div>
-                <strong>¡Estás en el puesto #1 de tu grupo!</strong>
-                <p>Invita a tus amigos con el botón de arriba para ver quién acumula más días de racha.</p>
+                <strong>¡Estás en el puesto #1!</strong>
+                <p>
+                  {activeSubTab === 'friends'
+                    ? 'Invita a tus amigos con el botón de arriba para ver quién acumula más días de racha.'
+                    : 'Comparte la app con tus amigos o compañeros para ver quién lidera el podio global.'}
+                </p>
               </div>
             </div>
           )}
