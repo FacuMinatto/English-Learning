@@ -3,12 +3,13 @@
 // Puedes rellenar estas variables aquí o mediante un archivo .env en la raíz del proyecto.
 
 export const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || ""
+  apiKey: "AIzaSyA3D7JH6fzW77bSr7J_uZ9qKFNi54tcEE4",
+  authDomain: "english-learning-a2f31.firebaseapp.com",
+  projectId: "english-learning-a2f31",
+  storageBucket: "english-learning-a2f31.firebasestorage.app",
+  messagingSenderId: "736415300851",
+  appId: "1:736415300851:web:6a082771d0198d5794cb86",
+  measurementId: "G-HN5CV94YJJ"
 };
 
 /**
