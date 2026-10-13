@@ -17,7 +17,7 @@ try {
     version: '1.3.0',
     commit: currentGitCommit,
     buildDate: buildDate,
-    apkUrl: 'https://facuminatto.github.io/English-Learning/EnglishLearning.apk',
+    apkUrl: 'https://github.com/FacuMinatto/English-Learning/releases/latest/download/EnglishLearning.apk',
     releasesUrl: 'https://github.com/FacuMinatto/English-Learning/releases'
   }
   fs.writeFileSync('./public/version.json', JSON.stringify(versionPayload, null, 2))
