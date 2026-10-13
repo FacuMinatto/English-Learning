@@ -1,17 +1,14 @@
 # Reglas y Flujo de Trabajo Obligatorio (English Learning)
 
+A partir de ahora el enfoque es **100% en la Aplicación Web (PWA)** alojada en GitHub Pages. No se compila APK localmente.
+
 Cada vez que se complete una petición o modificación en el código:
 
 1. **Revisión y Control Previo**:
    - Verificar la sintaxis, imports, estado y lógica de los componentes modificados.
-   - Ejecutar `npm run build` para comprobar que la compilación de Vite y PWA no presente errores.
+   - Ejecutar `npm.cmd run lint` (o verificar que no haya errores de linting).
+   - Ejecutar `npm.cmd run build` para comprobar que la compilación de Vite y PWA no presente ningún error.
 
-2. **Compilación de la APK de Android**:
-   - Ejecutar `npx cap sync android` para sincronizar los archivos y plugins en Android.
-   - Compilar el instalador APK ejecutando `gradlew.bat assembleDebug` dentro de la carpeta `android`.
-   - Verificar que el APK `android/app/build/outputs/apk/debug/app-debug.apk` se haya generado con éxito.
-   - Copiar el APK generado a `C:\Users\facum\OneDrive\Escritorio\APPs IA\EnglishLearning.apk` (según `build_apk.bat`).
-
-3. **Subida a Git (GitHub)**:
-   - Crear un commit con los cambios (`git commit -am "..."`).
-   - Hacer push a la rama principal (`git push`) para que GitHub Actions actualice automáticamente la web en vivo y se propague la actualización remota a todos los dispositivos.
+2. **Subida y Despliegue en Git (GitHub)**:
+   - Crear un commit claro con los cambios (`git commit -am "..."`).
+   - Hacer push a la rama principal (`git push origin main`) para que GitHub Actions compile y despliegue automáticamente la web en vivo en GitHub Pages (`https://facuminatto.github.io/English-Learning/`) y todos los usuarios reciban la actualización remota de inmediato.

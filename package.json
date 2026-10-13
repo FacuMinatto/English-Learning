@@ -20,6 +20,7 @@
     "@capacitor/share": "^8.0.3",
     "@capgo/capacitor-speech-recognition": "^8.3.2",
     "canvas-confetti": "^1.9.4",
+    "firebase": "^13.0.0",
     "google-translate-api-x": "^10.7.3",
     "lucide-react": "^1.52.0",
     "react": "^19.2.8",

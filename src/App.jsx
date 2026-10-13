@@ -28,6 +28,7 @@ import {
   Clock,
   Palette,
   Gamepad2,
+  Trophy,
   ArrowLeft,
   RefreshCw,
   Copy
@@ -54,6 +55,8 @@ import { useSettingsStore } from './store/useSettingsStore';
 import { useProgressStore } from './store/useProgressStore';
 const WordleGame = lazy(() => import('./components/WordleGame'));
 const ListenWriteGame = lazy(() => import('./components/ListenWriteGame'));
+const LeaderboardView = lazy(() => import('./components/LeaderboardView'));
+import { addFriendLocally } from './services/leaderboardService';
 
 import { 
   checkPronunciationMatch, 
@@ -84,6 +87,12 @@ const COLOR_PALETTES = [
 
 function App() {
   const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('friendId')) return 'leaderboard';
+      } catch {}
+    }
     const saved = getSaved('app_activeTab', 'daily');
     return saved === 'quiz' ? 'games' : saved;
   });
@@ -190,6 +199,26 @@ function App() {
     checkNotificationPermission().then(perm => {
       if (perm) setNotificationPermission(perm);
     });
+  }, []);
+
+  // Detect friend invite link from URL (?friendId=...&friendName=...)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const fId = params.get('friendId');
+        const fName = params.get('friendName');
+        const fAvatar = params.get('friendAvatar');
+        if (fId) {
+          addFriendLocally({
+            userId: fId,
+            name: fName || 'Amigo',
+            avatar: fAvatar || '⚡'
+          });
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      } catch {}
+    }
   }, []);
 
   // App Version & Update State
@@ -1497,6 +1526,7 @@ function App() {
             <h1 className="header-title">
               {activeTab === 'daily' ? 'Repaso Diario' : 
                activeTab === 'phrases' ? 'Frases Útiles' : 
+               activeTab === 'leaderboard' ? 'Ranking & Amigos' :
                activeTab === 'games' ? (
                  selectedGame === 'quiz' ? 'Quiz Relámpago' :
                  selectedGame === 'voice' ? 'Desafío de Voz' :
@@ -1523,6 +1553,8 @@ function App() {
                   ) : (
                     `${phraseQueue.length} ${phraseQueue.length === 1 ? 'frase' : 'frases'} en tanda (${duePhraseCount} a repasar)`
                   )
+                ) : activeTab === 'leaderboard' ? (
+                  'Compara tu racha y nivel de inglés con otros estudiantes 🏆'
                 ) : activeTab === 'games' ? (
                   'Elegí un juego para practicar y asegurar tu racha'
                 ) : (
@@ -3276,10 +3308,27 @@ function App() {
               </div>
             </div>
           )}
+
+          {/* TAB 5: LEADERBOARD & FRIENDS COMMUNITY */}
+          {activeTab === 'leaderboard' && (
+            <Suspense fallback={
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 20px', color: 'var(--text-muted)' }}>
+                <RefreshCw size={26} className="spin-animation" color="var(--primary-color)" />
+                <span style={{ marginTop: '12px', fontSize: '13px' }}>Cargando ranking de la comunidad...</span>
+              </div>
+            }>
+              <LeaderboardView 
+                streakCount={streakData.count}
+                wordsMastered={scheduledCount}
+                phrasesMastered={Object.values(phraseProgress || {}).filter(p => p && p.interval > 0).length}
+                todayActivities={streakData.todayActivities}
+              />
+            </Suspense>
+          )}
         </div>
       </main>
 
-      {/* Floating Bottom Navigation (4 tabs dock) */}
+      {/* Floating Bottom Navigation (5 tabs dock) */}
       <nav className="bottom-nav">
         <button 
           className={`nav-item ${activeTab === 'daily' ? 'active' : ''}`} 
@@ -3308,6 +3357,13 @@ function App() {
         >
           <MessageCircle size={18} strokeWidth={activeTab === 'phrases' ? 2.5 : 2} />
           <span>Frases</span>
+        </button>
+        <button 
+          className={`nav-item ${activeTab === 'leaderboard' ? 'active' : ''}`} 
+          onClick={() => setActiveTab('leaderboard')}
+        >
+          <Trophy size={18} strokeWidth={activeTab === 'leaderboard' ? 2.5 : 2} />
+          <span>Ranking</span>
         </button>
         <button 
           className={`nav-item ${activeTab === 'games' ? 'active' : ''}`} 
