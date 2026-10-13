@@ -3136,56 +3136,60 @@
   line-height: 1.1;
 }
 
-/* Friends Actions Row */
-.friends-actions-bar {
+/* Friends Actions Section (Stacked, 100% responsive, 0 horizontal overflow) */
+.friends-actions-section {
   display: flex;
-  gap: 8px;
-  margin-bottom: 18px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+  width: 100%;
 }
 
-.btn-share-friend {
+.btn-share-friend-primary {
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 10px 14px;
-  border-radius: 12px;
-  background: var(--primary-light);
-  color: var(--primary-color);
-  border: 1px solid var(--primary-glow);
-  font-family: inherit;
-  font-size: 12.5px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  flex: 1;
-  min-width: 140px;
   justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 13px 16px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+  color: #FFFFFF;
+  border: none;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 16px var(--primary-glow);
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  -webkit-tap-highlight-color: transparent;
 }
 
-.btn-share-friend:active {
-  transform: scale(0.97);
+.btn-share-friend-primary:active {
+  transform: scale(0.98);
 }
 
 .add-friend-form {
   display: flex;
   align-items: center;
-  gap: 6px;
-  flex: 1.5;
-  min-width: 180px;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .add-friend-input {
   flex: 1;
-  padding: 9px 12px;
+  min-width: 0;
+  padding: 11px 14px;
   border-radius: 12px;
   border: 1px solid var(--border-color);
   background: var(--card-bg);
   color: var(--text-main);
   font-family: inherit;
-  font-size: 12px;
+  font-size: 13px;
   outline: none;
   transition: border-color 0.2s ease;
+  box-sizing: border-box;
 }
 
 .add-friend-input:focus {
@@ -3193,22 +3197,77 @@
 }
 
 .btn-add-friend {
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
-  background: var(--primary-color);
-  color: #FFFFFF;
-  border: none;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
+  padding: 11px 16px;
+  border-radius: 12px;
+  background: var(--card-bg-elevated);
+  border: 1.5px solid var(--primary-glow);
+  color: var(--primary-color);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
   cursor: pointer;
   flex-shrink: 0;
-  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  -webkit-tap-highlight-color: transparent;
 }
 
 .btn-add-friend:active {
-  transform: scale(0.92);
+  transform: scale(0.95);
+  background: var(--primary-light);
+}
+
+/* Banner when in friends tab with 1 user */
+.invite-friends-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: var(--tag-bg);
+  border: 1px dashed var(--border-color);
+  margin: 8px 0 16px;
+}
+
+.invite-banner-emoji {
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.invite-friends-banner strong {
+  display: block;
+  font-size: 13.5px;
+  color: var(--text-main);
+  margin-bottom: 2px;
+}
+
+.invite-friends-banner p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+/* Badges for Rank 1, 2, 3 in row view */
+.rank-badge-gold {
+  color: #D97706;
+  font-weight: 900;
+  font-size: 13px;
+}
+
+.rank-badge-silver {
+  color: #64748B;
+  font-weight: 900;
+  font-size: 13px;
+}
+
+.rank-badge-bronze {
+  color: #B45309;
+  font-weight: 900;
+  font-size: 13px;
 }
 
 /* Top 3 Podium */

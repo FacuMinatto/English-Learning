@@ -1,7 +1,6 @@
 // src/components/LeaderboardView.jsx
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
-  Trophy, 
   Users, 
   Globe, 
   Flame, 
@@ -26,8 +25,7 @@ import {
   generateFriendShareData,
   AVATAR_LIST 
 } from '../services/leaderboardService';
-import { isConfigured, reinitializeFirebase } from '../services/firebase';
-import { saveFirebaseCustomConfig } from '../services/firebaseConfig';
+import { isConfigured } from '../services/firebase';
 import { triggerHaptic } from '../utils/helpers';
 
 export default function LeaderboardView({ streakCount = 0, wordsMastered = 0, phrasesMastered = 0, todayActivities = {} }) {
@@ -35,14 +33,11 @@ export default function LeaderboardView({ streakCount = 0, wordsMastered = 0, ph
   const [profile, setProfile] = useState(getUserProfile);
   const [leaderboardList, setLeaderboardList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showEditProfile, setShowEditProfile] = useState(() => !profile.hasCustomized);
+  const [showEditProfile, setShowEditProfile] = useState(() => !getUserProfile().hasCustomized);
   const [tempName, setTempName] = useState(profile.name);
   const [tempAvatar, setTempAvatar] = useState(profile.avatar);
   const [friendInput, setFriendInput] = useState('');
   const [copySuccess, setCopySuccess] = useState(false);
-  const [showConfigModal, setShowConfigModal] = useState(false);
-  const [customConfigJson, setCustomConfigJson] = useState('');
-  const [configSuccessMsg, setConfigSuccessMsg] = useState('');
 
   // Sincronizar y recargar datos del ranking
   const loadLeaderboardData = useCallback(async () => {
@@ -130,72 +125,38 @@ export default function LeaderboardView({ streakCount = 0, wordsMastered = 0, ph
     }
   };
 
-  // Guardar configuración personalizada de Firebase
-  const handleSaveFirebaseConfig = (e) => {
-    e.preventDefault();
-    try {
-      const parsed = JSON.parse(customConfigJson);
-      if (parsed.projectId && (parsed.apiKey || parsed.apiKey === '')) {
-        saveFirebaseCustomConfig(parsed);
-        reinitializeFirebase();
-        setConfigSuccessMsg('¡Configuración guardada! Reiniciando conexión...');
-        setTimeout(() => {
-          setShowConfigModal(false);
-          setConfigSuccessMsg('');
-          window.location.reload();
-        }, 1200);
-      } else {
-        alert('El JSON de Firebase debe incluir al menos "projectId" y "apiKey".');
-      }
-    } catch {
-      alert('Formato JSON inválido. Copia el objeto firebaseConfig tal cual te lo da la consola de Firebase.');
-    }
-  };
-
   // Identificar posición del usuario actual
   const myRankIndex = useMemo(() => {
     return leaderboardList.findIndex(item => item.userId === profile.userId);
   }, [leaderboardList, profile.userId]);
 
+  const hasFullPodium = leaderboardList.length >= 3;
   const topThree = useMemo(() => {
-    return leaderboardList.slice(0, 3);
-  }, [leaderboardList]);
+    return hasFullPodium ? leaderboardList.slice(0, 3) : [];
+  }, [leaderboardList, hasFullPodium]);
 
-  const restList = useMemo(() => {
-    return leaderboardList.slice(3);
-  }, [leaderboardList]);
+  const displayedList = useMemo(() => {
+    return hasFullPodium ? leaderboardList.slice(3) : leaderboardList;
+  }, [leaderboardList, hasFullPodium]);
 
   return (
     <div className="leaderboard-container animate-fade-in">
-      {/* Header & Title */}
-      <div className="leaderboard-header">
-        <div className="leaderboard-title-group">
-          <div className="leaderboard-trophy-icon">
-            <Trophy size={28} color="#F59E0B" />
-          </div>
-          <div>
-            <h1 className="leaderboard-title">Ranking & Comunidad</h1>
-            <p className="leaderboard-subtitle">Compara tu racha y nivel de inglés con otros estudiantes</p>
-          </div>
-        </div>
-
-        {/* Tab Selector: Global vs Amigos */}
-        <div className="leaderboard-segmented-tabs">
-          <button 
-            className={`leaderboard-tab-btn ${activeSubTab === 'global' ? 'active' : ''}`}
-            onClick={() => { setActiveSubTab('global'); triggerHaptic(15); }}
-          >
-            <Globe size={16} />
-            <span>Ranking Global</span>
-          </button>
-          <button 
-            className={`leaderboard-tab-btn ${activeSubTab === 'friends' ? 'active' : ''}`}
-            onClick={() => { setActiveSubTab('friends'); triggerHaptic(15); }}
-          >
-            <Users size={16} />
-            <span>Mis Amigos ({getSavedFriends().length})</span>
-          </button>
-        </div>
+      {/* Tab Selector: Global vs Amigos (Sleek full-width design) */}
+      <div className="leaderboard-segmented-tabs">
+        <button 
+          className={`leaderboard-tab-btn ${activeSubTab === 'global' ? 'active' : ''}`}
+          onClick={() => { setActiveSubTab('global'); triggerHaptic(15); }}
+        >
+          <Globe size={16} />
+          <span>Ranking Global</span>
+        </button>
+        <button 
+          className={`leaderboard-tab-btn ${activeSubTab === 'friends' ? 'active' : ''}`}
+          onClick={() => { setActiveSubTab('friends'); triggerHaptic(15); }}
+        >
+          <Users size={16} />
+          <span>Mis Amigos ({getSavedFriends().length})</span>
+        </button>
       </div>
 
       {/* User Status Card */}
@@ -230,11 +191,11 @@ export default function LeaderboardView({ streakCount = 0, wordsMastered = 0, ph
         </div>
       </div>
 
-      {/* Friends Actions Row */}
-      <div className="friends-actions-bar">
-        <button className="btn-share-friend" onClick={handleShareProfile}>
+      {/* Friends Actions Section (Cleanly stacked, 0 horizontal overflow) */}
+      <div className="friends-actions-section">
+        <button className="btn-share-friend-primary" onClick={handleShareProfile}>
           <Share2 size={16} />
-          <span>{copySuccess ? '¡Enlace copiado!' : 'Invitar amigos / Compartir'}</span>
+          <span>{copySuccess ? '¡Enlace copiado al portapapeles! 📋' : 'Invitar amigos / Compartir por WhatsApp'}</span>
         </button>
 
         <form className="add-friend-form" onSubmit={handleAddFriend}>
@@ -246,7 +207,8 @@ export default function LeaderboardView({ streakCount = 0, wordsMastered = 0, ph
             className="add-friend-input"
           />
           <button type="submit" className="btn-add-friend" title="Agregar a amigos">
-            <UserPlus size={16} />
+            <UserPlus size={15} />
+            <span>Agregar</span>
           </button>
         </form>
       </div>
@@ -265,63 +227,76 @@ export default function LeaderboardView({ streakCount = 0, wordsMastered = 0, ph
         </div>
       ) : (
         <>
-          {/* Top 3 Podium Display */}
-          {topThree.length > 0 && (
+          {/* Top 3 Podium Display (Only if 3 or more users exist) */}
+          {hasFullPodium && (
             <div className="podium-container">
               {/* #2 Silver (Left) */}
-              {topThree[1] && (
-                <div className={`podium-card rank-2 ${topThree[1].userId === profile.userId ? 'is-me' : ''}`}>
-                  <div className="podium-crown silver">🥈 #2</div>
-                  <div className="podium-avatar">{topThree[1].avatar}</div>
-                  <div className="podium-name">{topThree[1].name}</div>
-                  <div className="podium-xp">{topThree[1].xp} XP</div>
-                  <div className="podium-streak">
-                    <Flame size={12} color="#F59E0B" fill="#F59E0B" /> {topThree[1].streak}d
-                  </div>
-                  <div className="podium-pillar pillar-silver" />
+              <div className={`podium-card rank-2 ${topThree[1].userId === profile.userId ? 'is-me' : ''}`}>
+                <div className="podium-crown silver">🥈 #2</div>
+                <div className="podium-avatar">{topThree[1].avatar}</div>
+                <div className="podium-name">{topThree[1].name}</div>
+                <div className="podium-xp">{topThree[1].xp} XP</div>
+                <div className="podium-streak">
+                  <Flame size={12} color="#F59E0B" fill="#F59E0B" /> {topThree[1].streak}d
                 </div>
-              )}
+                <div className="podium-pillar pillar-silver" />
+              </div>
 
               {/* #1 Gold (Center Elevated) */}
-              {topThree[0] && (
-                <div className={`podium-card rank-1 ${topThree[0].userId === profile.userId ? 'is-me' : ''}`}>
-                  <div className="podium-crown gold">👑 #1</div>
-                  <div className="podium-avatar first-place">{topThree[0].avatar}</div>
-                  <div className="podium-name">{topThree[0].name}</div>
-                  <div className="podium-xp">{topThree[0].xp} XP</div>
-                  <div className="podium-streak">
-                    <Flame size={12} color="#F59E0B" fill="#F59E0B" /> {topThree[0].streak}d
-                  </div>
-                  <div className="podium-pillar pillar-gold" />
+              <div className={`podium-card rank-1 ${topThree[0].userId === profile.userId ? 'is-me' : ''}`}>
+                <div className="podium-crown gold">👑 #1</div>
+                <div className="podium-avatar first-place">{topThree[0].avatar}</div>
+                <div className="podium-name">{topThree[0].name}</div>
+                <div className="podium-xp">{topThree[0].xp} XP</div>
+                <div className="podium-streak">
+                  <Flame size={12} color="#F59E0B" fill="#F59E0B" /> {topThree[0].streak}d
                 </div>
-              )}
+                <div className="podium-pillar pillar-gold" />
+              </div>
 
               {/* #3 Bronze (Right) */}
-              {topThree[2] && (
-                <div className={`podium-card rank-3 ${topThree[2].userId === profile.userId ? 'is-me' : ''}`}>
-                  <div className="podium-crown bronze">🥉 #3</div>
-                  <div className="podium-avatar">{topThree[2].avatar}</div>
-                  <div className="podium-name">{topThree[2].name}</div>
-                  <div className="podium-xp">{topThree[2].xp} XP</div>
-                  <div className="podium-streak">
-                    <Flame size={12} color="#F59E0B" fill="#F59E0B" /> {topThree[2].streak}d
-                  </div>
-                  <div className="podium-pillar pillar-bronze" />
+              <div className={`podium-card rank-3 ${topThree[2].userId === profile.userId ? 'is-me' : ''}`}>
+                <div className="podium-crown bronze">🥉 #3</div>
+                <div className="podium-avatar">{topThree[2].avatar}</div>
+                <div className="podium-name">{topThree[2].name}</div>
+                <div className="podium-xp">{topThree[2].xp} XP</div>
+                <div className="podium-streak">
+                  <Flame size={12} color="#F59E0B" fill="#F59E0B" /> {topThree[2].streak}d
                 </div>
-              )}
+                <div className="podium-pillar pillar-bronze" />
+              </div>
             </div>
           )}
 
-          {/* Leaderboard Table List (#4 onwards) */}
+          {/* Banner when in friends tab with 1 user */}
+          {activeSubTab === 'friends' && leaderboardList.length === 1 && (
+            <div className="invite-friends-banner">
+              <span className="invite-banner-emoji">🚀</span>
+              <div>
+                <strong>¡Estás en el puesto #1 de tu grupo!</strong>
+                <p>Invita a tus amigos con el botón de arriba para ver quién acumula más días de racha.</p>
+              </div>
+            </div>
+          )}
+
+          {/* Leaderboard Rows List */}
           <div className="leaderboard-list">
-            {restList.map((item, idx) => {
-              const rankNum = idx + 4;
+            {displayedList.map((item, idx) => {
+              const rankNum = hasFullPodium ? idx + 4 : idx + 1;
               const isMe = item.userId === profile.userId;
 
               return (
                 <div key={item.userId || idx} className={`leaderboard-row ${isMe ? 'is-me' : ''}`}>
                   <div className="leaderboard-row-rank">
-                    <span>#{rankNum}</span>
+                    {rankNum === 1 ? (
+                      <span className="rank-badge-gold">👑 1</span>
+                    ) : rankNum === 2 ? (
+                      <span className="rank-badge-silver">🥈 2</span>
+                    ) : rankNum === 3 ? (
+                      <span className="rank-badge-bronze">🥉 3</span>
+                    ) : (
+                      <span>#{rankNum}</span>
+                    )}
                   </div>
 
                   <div className="leaderboard-row-avatar">
@@ -335,7 +310,7 @@ export default function LeaderboardView({ streakCount = 0, wordsMastered = 0, ph
                     </div>
                     <div className="leaderboard-row-details">
                       <span className="row-streak-chip">
-                        <Flame size={11} color="#F59E0B" fill="#F59E0B" /> {item.streak || 0}d
+                        <Flame size={11} color="#F59E0B" fill="#F59E0B" /> {item.streak || 0}d racha
                       </span>
                       {item.wordsMastered > 0 && (
                         <span className="row-words-chip">
@@ -374,10 +349,10 @@ export default function LeaderboardView({ streakCount = 0, wordsMastered = 0, ph
             <span>Sincronizado con Google Cloud (Firebase)</span>
           </div>
         ) : (
-          <button className="cloud-status-pill pending" onClick={() => setShowConfigModal(true)}>
+          <div className="cloud-status-pill local">
             <Sparkles size={14} color="#F59E0B" />
-            <span>Configurar Google Firebase en 1 clic</span>
-          </button>
+            <span>Modo Local / Simulado</span>
+          </div>
         )}
       </div>
 
@@ -433,54 +408,6 @@ export default function LeaderboardView({ streakCount = 0, wordsMastered = 0, ph
                 <Check size={18} />
                 <span>Guardar y Unirme al Ranking</span>
               </button>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Firebase Cloud Setup Modal */}
-      {showConfigModal && (
-        <div className="modal-overlay" onClick={() => setShowConfigModal(false)}>
-          <div className="modal-sheet animate-fade-in" onClick={e => e.stopPropagation()}>
-            <div className="sheet-drag-handle" />
-            <div className="modal-header">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Sparkles size={20} color="var(--primary-color)" />
-                <h2 className="modal-title">Vincular Google Firebase</h2>
-              </div>
-              <button className="btn-icon" onClick={() => setShowConfigModal(false)}>
-                <X size={18} />
-              </button>
-            </div>
-
-            <p style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: '1.4', marginBottom: '12px' }}>
-              Para que tu base de datos esté 100% activa en tiempo real entre todos tus amigos de forma gratuita, crea un proyecto en <a href="https://console.firebase.google.com" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary-color)', fontWeight: 'bold' }}>Firebase Console</a> y pega el objeto de configuración aquí:
-            </p>
-
-            <form onSubmit={handleSaveFirebaseConfig}>
-              <textarea 
-                className="firebase-config-textarea"
-                rows={7}
-                placeholder={`{\n  "apiKey": "AIzaSy...",\n  "projectId": "english-learning-...",\n  "storageBucket": "..."\n}`}
-                value={customConfigJson}
-                onChange={(e) => setCustomConfigJson(e.target.value)}
-              />
-
-              {configSuccessMsg && (
-                <div style={{ color: '#10B981', fontSize: '13px', fontWeight: 'bold', margin: '8px 0' }}>
-                  {configSuccessMsg}
-                </div>
-              )}
-
-              <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
-                <button type="button" className="btn-secondary" onClick={() => setShowConfigModal(false)} style={{ flex: 1 }}>
-                  Cancelar
-                </button>
-                <button type="submit" className="btn-primary" style={{ flex: 2 }}>
-                  <Check size={16} />
-                  <span>Conectar Base de Datos</span>
-                </button>
-              </div>
             </form>
           </div>
         </div>
