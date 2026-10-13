@@ -100,7 +100,7 @@ if (insertPos > targetStr.length) {
   
   let injection = "\\n";
   techWords.forEach(w => {
-    injection += \`  { "id": \${startId++}, "english": "\${w.english}", "spanish": "\${w.spanish}" },\\n\`;
+    injection += `  { "id": ${startId++}, "english": "${w.english}", "spanish": "${w.spanish}" },\n`;
   });
   
   const newData = data.slice(0, insertPos) + injection + data.slice(insertPos);

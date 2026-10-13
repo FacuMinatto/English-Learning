@@ -34,6 +34,7 @@ export default defineConfig({
     react(),
     VitePWA({ 
       registerType: 'autoUpdate',
+      injectRegister: null,
       includeAssets: ['favicon.ico', 'favicon.png', 'favicon.svg', 'apple-touch-icon.png', 'version.json'],
       manifest: {
         name: 'English Learning',

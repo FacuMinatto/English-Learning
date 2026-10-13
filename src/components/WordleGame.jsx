@@ -8,7 +8,6 @@ const COLS = 5;
 
 
 export default function WordleGame({ dictionary, onClose, onWin, playFx, speak }) {
-  const [targetWordObj, setTargetWordObj] = useState(null);
   const [guesses, setGuesses] = useState([]);
   const [currentGuess, setCurrentGuess] = useState('');
   const [status, setStatus] = useState('playing'); // 'playing', 'won', 'lost'
@@ -27,6 +26,11 @@ export default function WordleGame({ dictionary, onClose, onWin, playFx, speak }
     return dictionary.filter(w => /^[a-zA-Z]{5}$/.test(w.english));
   }, [dictionary]);
 
+  const [targetWordObj, setTargetWordObj] = useState(() => {
+    const list = dictionary.filter(w => /^[a-zA-Z]{5}$/.test(w.english));
+    return list.length > 0 ? list[Math.floor(Math.random() * list.length)] : null;
+  });
+
   const initGame = useCallback(() => {
     if (playableWords.length === 0) return;
     const randomObj = playableWords[Math.floor(Math.random() * playableWords.length)];
@@ -37,10 +41,6 @@ export default function WordleGame({ dictionary, onClose, onWin, playFx, speak }
     setStatus('playing');
     setToastMsg('');
   }, [playableWords]);
-
-  useEffect(() => {
-    initGame();
-  }, [initGame]);
 
   const handleInputChange = (e) => {
     if (status !== 'playing') return;

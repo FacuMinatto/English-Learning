@@ -28,7 +28,6 @@ import {
   Clock,
   Palette,
   Gamepad2,
-  Trophy,
   ArrowLeft,
   RefreshCw,
   Copy
@@ -37,7 +36,6 @@ import './App.css';
 import { initialDictionary, initialPhrases } from './data';
 import { getWordDetails } from './wordEnricher';
 import { TextToSpeech } from '@capacitor-community/text-to-speech';
-import { SpeechRecognition } from '@capgo/capacitor-speech-recognition';
 import { Capacitor } from '@capacitor/core';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
@@ -46,8 +44,8 @@ import { Share } from '@capacitor/share';
 const LINKEDIN_PROFILE_URL = 'https://www.linkedin.com/in/facundo-manuel-minatto-225b77381/?isSelfProfile=true';
 
 import { 
-  getSaved, hexToRgb, adjustColorBrightness, getRandomFloat, shuffleArray, 
-  getTodayStr, mulberry32, seededShuffle, triggerHaptic 
+  getSaved, hexToRgb, adjustColorBrightness, shuffleArray, 
+  getTodayStr, seededShuffle, triggerHaptic 
 } from './utils/helpers';
 import { 
   getIntervals, formatInterval, getTimeUntilReview, getDetailedReviewDate 
@@ -568,9 +566,15 @@ function App() {
     return () => clearTimeout(handler);
   }, [searchTerm]);
 
-  useEffect(() => {
+  const [prevFilterParams, setPrevFilterParams] = useState({ categoryFilter, dictSortOrder, randomSeed });
+  if (
+    prevFilterParams.categoryFilter !== categoryFilter ||
+    prevFilterParams.dictSortOrder !== dictSortOrder ||
+    prevFilterParams.randomSeed !== randomSeed
+  ) {
+    setPrevFilterParams({ categoryFilter, dictSortOrder, randomSeed });
     setVisibleCount(40);
-  }, [categoryFilter, dictSortOrder, randomSeed]);
+  }
 
   // Calculate if the daily streak requirement is met today (any of the 3 paths)
   const isStreakMetToday = useMemo(() => {
@@ -712,7 +716,7 @@ function App() {
     }
 
     setTimeout(() => setIsPlayingAudio(false), 2200);
-  }, [voiceSpeed, isPlayingAudio, stopAllAudio]);
+  }, [voiceSpeed, stopAllAudio]);
 
   // Optional Voice Recognition Practice on Flashcard
   const testPronunciation = async (targetWord, e) => {

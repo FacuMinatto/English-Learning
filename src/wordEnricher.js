@@ -1787,7 +1787,6 @@ export function getWordDetails(wordObj) {
   }
 
   const eng = wordObj.english || '';
-  const esp = wordObj.spanish || '';
   const cleanEn = eng.trim();
   const lowerEn = cleanEn.toLowerCase();
   const normalizedEn = lowerEn.replace(/[.,!?;:]+$/, '').trim();
