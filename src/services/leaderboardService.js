@@ -145,11 +145,22 @@ export async function syncUserProgress({ streak = 0, wordsMastered = 0, phrasesM
 
 /**
  * Obtiene la lista de amigos guardados localmente
+ * (Filtra automáticamente al propio usuario para evitar que se auto-agregue)
  */
 export function getSavedFriends() {
+  const myId = getOrCreateUserId();
   try {
     const raw = localStorage.getItem(STORAGE_FRIENDS_KEY);
-    return raw ? JSON.parse(raw) : [];
+    if (!raw) return [];
+    const list = JSON.parse(raw);
+    if (!Array.isArray(list)) return [];
+    
+    // Purgar cualquier entrada que sea el propio usuario
+    const cleaned = list.filter(f => f && f.userId && f.userId !== myId);
+    if (cleaned.length !== list.length) {
+      localStorage.setItem(STORAGE_FRIENDS_KEY, JSON.stringify(cleaned));
+    }
+    return cleaned;
   } catch {
     return [];
   }
@@ -157,9 +168,15 @@ export function getSavedFriends() {
 
 /**
  * Agrega un amigo a la lista local
+ * Retorna true si se agregó con éxito, false si es el propio usuario o ya existía
  */
 export function addFriendLocally(friend) {
   if (!friend || !friend.userId) return false;
+  const myId = getOrCreateUserId();
+
+  // No permitir auto-agregarse como amigo
+  if (friend.userId === myId) return false;
+
   const friends = getSavedFriends();
   if (friends.some(f => f.userId === friend.userId)) return false;
 
@@ -223,12 +240,15 @@ export async function getGlobalLeaderboard(myScore) {
  */
 export async function getFriendsLeaderboard(myScore) {
   const friends = getSavedFriends();
-  const friendIds = friends.map(f => f.userId);
+  const myUserId = myScore?.userId || getOrCreateUserId();
+  // Amigos reales excluyendo al usuario actual
+  const validFriends = friends.filter(f => f && f.userId && f.userId !== myUserId);
+  const friendIds = validFriends.map(f => f.userId);
 
   if (isConfigured && db && friendIds.length > 0) {
     try {
       const list = [];
-      for (const f of friends) {
+      for (const f of validFriends) {
         try {
           const docSnap = await getDoc(doc(db, 'leaderboard', f.userId));
           if (docSnap.exists()) {
@@ -250,7 +270,7 @@ export async function getFriendsLeaderboard(myScore) {
   }
 
   // Fallback local: amigos reales agregados por el usuario
-  const localList = friends.map(f => ({
+  const localList = validFriends.map(f => ({
     userId: f.userId,
     name: f.name,
     avatar: f.avatar,

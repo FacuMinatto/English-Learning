@@ -210,11 +210,14 @@ function App() {
         const fName = params.get('friendName');
         const fAvatar = params.get('friendAvatar');
         if (fId) {
-          addFriendLocally({
-            userId: fId,
-            name: fName || 'Amigo',
-            avatar: fAvatar || '⚡'
-          });
+          const myProfile = getUserProfile();
+          if (fId !== myProfile.userId) {
+            addFriendLocally({
+              userId: fId,
+              name: fName || 'Amigo',
+              avatar: fAvatar || '⚡'
+            });
+          }
           window.history.replaceState({}, document.title, window.location.pathname);
         }
       } catch {}

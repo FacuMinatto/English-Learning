@@ -38,6 +38,7 @@ export default function LeaderboardView({ streakCount = 0, wordsMastered = 0, ph
   const [tempAvatar, setTempAvatar] = useState(profile.avatar);
   const [friendInput, setFriendInput] = useState('');
   const [copySuccess, setCopySuccess] = useState(false);
+  const [friendFeedback, setFriendFeedback] = useState('');
 
   // Sincronizar y recargar datos del ranking
   const loadLeaderboardData = useCallback(async () => {
@@ -107,15 +108,31 @@ export default function LeaderboardView({ streakCount = 0, wordsMastered = 0, ph
   // Agregar amigo manualmente por ID o Nombre
   const handleAddFriend = (e) => {
     e.preventDefault();
-    if (!friendInput.trim()) return;
+    const friendId = friendInput.trim();
+    if (!friendId) return;
     triggerHaptic(20);
 
-    const friendId = friendInput.trim();
-    addFriendLocally({
+    // Evitar auto-agregarse
+    if (friendId === profile.userId) {
+      setFriendFeedback('¡Ese es tu propio código! Comparte tu enlace con amigos para que te agreguen.');
+      setTimeout(() => setFriendFeedback(''), 4000);
+      setFriendInput('');
+      return;
+    }
+
+    const added = addFriendLocally({
       userId: friendId,
       name: friendId.startsWith('user_') ? 'Compañero' : friendId,
       avatar: '⚡'
     });
+
+    if (!added) {
+      setFriendFeedback('Este amigo ya está en tu lista o el código no es válido.');
+      setTimeout(() => setFriendFeedback(''), 3000);
+    } else {
+      setFriendFeedback('¡Amigo agregado con éxito! 🎉');
+      setTimeout(() => setFriendFeedback(''), 3000);
+    }
 
     setFriendInput('');
     if (activeSubTab === 'friends') {
@@ -211,6 +228,12 @@ export default function LeaderboardView({ streakCount = 0, wordsMastered = 0, ph
             <span>Agregar</span>
           </button>
         </form>
+
+        {friendFeedback && (
+          <div className="friend-feedback-msg animate-fade-in">
+            {friendFeedback}
+          </div>
+        )}
       </div>
 
       {/* Loading state */}
