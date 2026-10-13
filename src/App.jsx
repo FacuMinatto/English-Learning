@@ -30,7 +30,8 @@ import {
   Gamepad2,
   Trophy,
   ArrowLeft,
-  RefreshCw
+  RefreshCw,
+  Copy
 } from 'lucide-react';
 import './App.css';
 import { initialDictionary, initialPhrases } from './data';
@@ -39,6 +40,8 @@ import { TextToSpeech } from '@capacitor-community/text-to-speech';
 import { SpeechRecognition } from '@capgo/capacitor-speech-recognition';
 import { Capacitor } from '@capacitor/core';
 import { App as CapacitorApp } from '@capacitor/app';
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
 
 const LINKEDIN_PROFILE_URL = 'https://www.linkedin.com/in/facundo-manuel-minatto-225b77381/?isSelfProfile=true';
 
@@ -1230,61 +1233,158 @@ function App() {
     }
   };
 
+  // Helper to compile backup data
+  const generateBackupPayload = () => ({
+    app_version: '2.0',
+    exportedAt: new Date().toISOString(),
+    wordProgress,
+    phraseProgress,
+    customWords,
+    streakData,
+    themeMode,
+    themeColor,
+    wordsPerDay,
+    phrasesPerDay,
+    voiceSpeed,
+    soundEnabled,
+    reminderEnabled,
+    reminderSchedule
+  });
+
+  // Helper to apply imported data
+  const applyBackupPayload = (data) => {
+    if (!data || typeof data !== 'object') {
+      throw new Error('Formato inválido');
+    }
+    if (data.wordProgress) setWordProgress(data.wordProgress);
+    if (data.phraseProgress) setPhraseProgress(data.phraseProgress);
+    if (data.customWords) setCustomWords(data.customWords);
+    if (data.streakData) setStreakData(data.streakData);
+    if (data.themeColor) setThemeColor(data.themeColor);
+    if (data.themeMode) setThemeMode(data.themeMode);
+    if (data.wordsPerDay) setWordsPerDay(data.wordsPerDay);
+    if (data.phrasesPerDay) setPhrasesPerDay(data.phrasesPerDay);
+    if (data.voiceSpeed) setVoiceSpeed(data.voiceSpeed);
+    if (data.soundEnabled !== undefined) setSoundEnabled(data.soundEnabled);
+    if (data.reminderEnabled !== undefined) setReminderEnabled(data.reminderEnabled);
+    if (data.reminderSchedule) setReminderSchedule(data.reminderSchedule);
+
+    playFxSound('fanfare', soundEnabled);
+    alert("¡Copia de seguridad restaurada con éxito! 🎉 Tu progreso ha sido recuperado.");
+    closeSettingsModal();
+  };
+
   // Backup Export
   const handleExportBackup = async () => {
+    triggerHaptic(20);
+    playFxSound('click', soundEnabled);
     try {
-      const backupData = {
-        app_version: '2.0',
-        exportedAt: new Date().toISOString(),
-        wordProgress,
-        phraseProgress,
-        customWords,
-        streakData,
-        themeMode,
-        themeColor,
-        wordsPerDay,
-        phrasesPerDay,
-        voiceSpeed,
-        soundEnabled,
-        reminderEnabled,
-        reminderSchedule
-      };
-
+      const backupData = generateBackupPayload();
       const jsonStr = JSON.stringify(backupData, null, 2);
       const fileName = `english_learning_backup_${new Date().toISOString().slice(0, 10)}.json`;
-      const blob = new Blob([jsonStr], { type: 'application/json' });
 
-      // Check for Web Share API with file support (very useful on iOS Safari & mobile)
-      if (navigator.canShare && navigator.canShare({ files: [new File([blob], fileName, { type: 'application/json' })] })) {
+      // 1. Android & iOS Native App (Capacitor FileSystem + Native Share Sheet)
+      if (typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform && Capacitor.isNativePlatform()) {
         try {
-          const file = new File([blob], fileName, { type: 'application/json' });
-          await navigator.share({
+          const savedFile = await Filesystem.writeFile({
+            path: fileName,
+            data: jsonStr,
+            directory: Directory.Cache,
+            encoding: Encoding.UTF8
+          });
+
+          await Share.share({
             title: 'Copia de seguridad - English Learning',
-            text: 'Copia de seguridad de progreso y configuración.',
-            files: [file]
+            text: 'Copia de seguridad de progreso y configuración de English Learning.',
+            url: savedFile.uri,
+            dialogTitle: 'Guardar o compartir copia de seguridad'
           });
           return;
+        } catch (nativeErr) {
+          const errStr = (nativeErr?.message || '').toLowerCase();
+          if (errStr.includes('cancel') || nativeErr?.name === 'AbortError') {
+            return;
+          }
+          console.warn('Native share failed, proceeding to web fallback:', nativeErr);
+        }
+      }
+
+      // 2. Web Share API with file support (e.g. mobile Safari / browsers that support files)
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      if (typeof navigator !== 'undefined' && navigator.canShare) {
+        try {
+          const file = new File([blob], fileName, { type: 'application/json' });
+          if (navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              title: 'Copia de seguridad - English Learning',
+              text: 'Copia de seguridad de progreso y configuración.',
+              files: [file]
+            });
+            return;
+          }
         } catch (shareErr) {
           if (shareErr.name === 'AbortError') return;
         }
       }
 
-      // Classic download fallback
+      // 3. Classic download fallback (Web Browsers)
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = fileName;
+      a.rel = 'noopener';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+      alert('¡Copia de seguridad descargada con éxito! Revisa tu carpeta de Descargas.');
     } catch (err) {
       console.error('Error exporting backup:', err);
       alert('No se pudo generar la copia de seguridad.');
     }
   };
 
-  // Backup Import
+  // Copy Backup JSON to Clipboard
+  const handleCopyBackupToClipboard = async () => {
+    triggerHaptic(20);
+    playFxSound('click', soundEnabled);
+    try {
+      const backupData = generateBackupPayload();
+      const jsonStr = JSON.stringify(backupData, null, 2);
+      await navigator.clipboard.writeText(jsonStr);
+      playFxSound('success', soundEnabled);
+      alert('¡Copia de seguridad copiada al portapapeles! 📋 Puedes guardarla en tus notas o enviártela por mensaje.');
+    } catch (err) {
+      console.error('Error copying backup to clipboard:', err);
+      alert('No se pudo copiar al portapapeles.');
+    }
+  };
+
+  // Restore Backup from Copied Text
+  const handleRestoreFromText = async () => {
+    triggerHaptic(20);
+    playFxSound('click', soundEnabled);
+    try {
+      let text = '';
+      if (typeof navigator !== 'undefined' && navigator.clipboard?.readText) {
+        try {
+          text = await navigator.clipboard.readText();
+        } catch (e) {}
+      }
+      if (!text || !text.trim().startsWith('{')) {
+        text = prompt('Pega aquí el código/texto de tu copia de seguridad JSON:');
+      }
+      if (!text || !text.trim()) return;
+
+      const data = JSON.parse(text.trim());
+      applyBackupPayload(data);
+    } catch (err) {
+      console.error('Error restoring backup from text:', err);
+      alert('El texto pegado no es una copia de seguridad válida.');
+    }
+  };
+
+  // Backup Import from File
   const handleImportBackup = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -1293,25 +1393,10 @@ function App() {
     reader.onload = (event) => {
       try {
         const data = JSON.parse(event.target.result);
-        if (data.wordProgress) setWordProgress(data.wordProgress);
-        if (data.phraseProgress) setPhraseProgress(data.phraseProgress);
-        if (data.customWords) setCustomWords(data.customWords);
-        if (data.streakData) setStreakData(data.streakData);
-        if (data.themeColor) setThemeColor(data.themeColor);
-        if (data.themeMode) setThemeMode(data.themeMode);
-        if (data.wordsPerDay) setWordsPerDay(data.wordsPerDay);
-        if (data.phrasesPerDay) setPhrasesPerDay(data.phrasesPerDay);
-        if (data.voiceSpeed) setVoiceSpeed(data.voiceSpeed);
-        if (data.soundEnabled !== undefined) setSoundEnabled(data.soundEnabled);
-        if (data.reminderEnabled !== undefined) setReminderEnabled(data.reminderEnabled);
-        if (data.reminderSchedule) setReminderSchedule(data.reminderSchedule);
-        
-        playFxSound('fanfare', soundEnabled);
-        alert("¡Copia de seguridad restaurada con éxito! 🎉 Tu progreso ha sido recuperado.");
-        closeSettingsModal();
+        applyBackupPayload(data);
       } catch (err) {
         console.error('Error importing backup:', err);
-        alert("El archivo no es una copia de seguridad válida.");
+        alert('El archivo no es una copia de seguridad válida.');
       } finally {
         if (e.target) e.target.value = '';
       }
@@ -3814,11 +3899,11 @@ function App() {
                     <span>Copia de seguridad</span>
                   </div>
                   <div className="backup-row">
-                    <button className="btn-backup" onClick={handleExportBackup}>
+                    <button className="btn-backup" onClick={handleExportBackup} title="Exportar copia de seguridad">
                       <Download size={15} />
                       <span>Exportar</span>
                     </button>
-                    <button className="btn-backup" onClick={() => fileInputRef.current?.click()}>
+                    <button className="btn-backup" onClick={() => fileInputRef.current?.click()} title="Importar copia desde archivo">
                       <Upload size={15} />
                       <span>Importar</span>
                     </button>
@@ -3826,10 +3911,23 @@ function App() {
                       type="file" 
                       ref={fileInputRef} 
                       style={{ display: 'none' }} 
-                      accept=".json"
+                      accept=".json,application/json,text/plain,*/*"
                       onChange={handleImportBackup} 
                     />
                   </div>
+                  <div className="backup-row secondary-row" style={{ marginTop: '8px' }}>
+                    <button className="btn-backup secondary" onClick={handleCopyBackupToClipboard} title="Copiar copia de seguridad al portapapeles">
+                      <Copy size={13} />
+                      <span>Copiar datos</span>
+                    </button>
+                    <button className="btn-backup secondary" onClick={handleRestoreFromText} title="Restaurar copia pegando texto">
+                      <Upload size={13} />
+                      <span>Pegar datos</span>
+                    </button>
+                  </div>
+                  <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '8px', lineHeight: '1.4' }}>
+                    💡 Guarda tu progreso para transferirlo a otro celular o tener un respaldo seguro.
+                  </p>
                 </div>
 
                 <div style={{ marginTop: '8px' }}>
