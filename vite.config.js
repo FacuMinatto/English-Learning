@@ -14,7 +14,7 @@ const buildDate = new Date().toISOString()
 
 try {
   const versionPayload = {
-    version: '1.3.0',
+    version: '1.3.1',
     commit: currentGitCommit,
     buildDate: buildDate,
     apkUrl: 'https://github.com/FacuMinatto/English-Learning/releases/latest/download/EnglishLearning.apk',
@@ -26,7 +26,7 @@ try {
 export default defineConfig({
   base: './',
   define: {
-    __APP_VERSION__: JSON.stringify('1.3.0'),
+    __APP_VERSION__: JSON.stringify('1.3.1'),
     __GIT_COMMIT__: JSON.stringify(currentGitCommit),
     __BUILD_DATE__: JSON.stringify(buildDate)
   },

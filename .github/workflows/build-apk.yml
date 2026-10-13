@@ -15,6 +15,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -44,6 +46,7 @@ jobs:
 
       - name: Sync Capacitor Android
         run: |
+          rm -rf android/app/src/main/assets/public
           mkdir -p android/app/src/main/assets/public
           cp -r dist/* android/app/src/main/assets/public/
           npx --yes @capacitor/cli copy android || true

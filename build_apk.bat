@@ -12,11 +12,12 @@ cd /d "C:\Users\facum\OneDrive\Escritorio\APPs IA\EnglishLearning"
 call npm.cmd run build
 
 echo [3/5] Syncing Capacitor Android...
+if exist "android\app\src\main\assets\public" rd /s /q "android\app\src\main\assets\public"
 call npx.cmd cap sync android
 
 echo [4/5] Building APK with Gradle...
 cd /d "C:\Users\facum\OneDrive\Escritorio\APPs IA\EnglishLearning\android"
-call gradlew.bat assembleDebug
+call gradlew.bat clean assembleDebug
 
 echo [5/5] Checking generated APK...
 if exist "app\build\outputs\apk\debug\app-debug.apk" (
