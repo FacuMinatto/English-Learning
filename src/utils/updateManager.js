@@ -7,6 +7,7 @@ export const APP_BUILD_DATE = typeof __BUILD_DATE__ !== 'undefined' ? __BUILD_DA
 export const GITHUB_REPO = 'FacuMinatto/English-Learning';
 export const APK_DIRECT_URL = 'https://github.com/FacuMinatto/English-Learning/releases/latest/download/EnglishLearning.apk';
 export const GITHUB_RELEASES_URL = 'https://github.com/FacuMinatto/English-Learning/releases';
+export const REMOTE_VERSION_URL = 'https://facuminatto.github.io/English-Learning/version.json';
 
 /**
  * Returns current local application build info
@@ -67,8 +68,9 @@ export async function checkAppUpdates() {
       };
     }
 
-    // 2. Fallback to local version.json if GitHub API is rate-limited
-    const vRes = await fetch(`./version.json?t=${Date.now()}`, { cache: 'no-store' });
+    // 2. Fallback to hosted version.json if GitHub API is rate-limited
+    const versionUrl = isNative ? `${REMOTE_VERSION_URL}?t=${Date.now()}` : `./version.json?t=${Date.now()}`;
+    const vRes = await fetch(versionUrl, { cache: 'no-store' });
     if (vRes.ok) {
       const vData = await vRes.json();
       const remoteCommit = (vData.commit || '').substring(0, 7);
@@ -76,7 +78,9 @@ export async function checkAppUpdates() {
         remoteCommit && 
         APP_COMMIT && 
         APP_COMMIT !== 'dev' && 
-        !remoteCommit.startsWith(APP_COMMIT)
+        APP_COMMIT !== 'latest' &&
+        !remoteCommit.startsWith(APP_COMMIT) &&
+        !APP_COMMIT.startsWith(remoteCommit)
       );
 
       return {

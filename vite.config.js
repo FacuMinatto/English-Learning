@@ -3,12 +3,25 @@ import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import { execSync } from 'child_process'
 
+import fs from 'fs'
+
 let currentGitCommit = '1a9d629'
 try {
   currentGitCommit = execSync('git rev-parse --short HEAD').toString().trim()
 } catch (e) {}
 
 const buildDate = new Date().toISOString()
+
+try {
+  const versionPayload = {
+    version: '1.3.0',
+    commit: currentGitCommit,
+    buildDate: buildDate,
+    apkUrl: 'https://github.com/FacuMinatto/English-Learning/releases/latest/download/EnglishLearning.apk',
+    releasesUrl: 'https://github.com/FacuMinatto/English-Learning/releases'
+  }
+  fs.writeFileSync('./public/version.json', JSON.stringify(versionPayload, null, 2))
+} catch (e) {}
 
 export default defineConfig({
   base: './',
