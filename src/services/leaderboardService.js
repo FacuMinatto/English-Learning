@@ -1,5 +1,5 @@
 // src/services/leaderboardService.js
-import { db, isConfigured } from './firebase';
+import { db, auth, isConfigured, ensureAuthUser } from './firebase';
 import { 
   collection, 
   doc, 
@@ -22,8 +22,15 @@ export const AVATAR_LIST = [
 
 /**
  * Obtiene o genera un identificador único persistente para este navegador/dispositivo
+ * Prioriza el UID criptográfico de Firebase Auth si ya se encuentra disponible.
  */
 export function getOrCreateUserId() {
+  if (auth?.currentUser?.uid) {
+    const uid = auth.currentUser.uid;
+    try { localStorage.setItem(STORAGE_USER_ID_KEY, uid); } catch {}
+    return uid;
+  }
+
   try {
     let id = localStorage.getItem(STORAGE_USER_ID_KEY);
     if (!id) {
@@ -63,6 +70,16 @@ export function getUserProfile() {
  * Guarda el perfil del usuario (Nombre y Avatar)
  */
 export async function saveUserProfile(name, avatar) {
+  // Asegurar autenticación en Firebase si está configurado
+  if (isConfigured && db) {
+    try {
+      const authUser = await ensureAuthUser();
+      if (authUser?.uid) {
+        localStorage.setItem(STORAGE_USER_ID_KEY, authUser.uid);
+      }
+    } catch {}
+  }
+
   const userId = getOrCreateUserId();
   const cleanName = (name || 'Estudiante').trim().slice(0, 24);
   const cleanAvatar = avatar || '🦉';
@@ -87,7 +104,8 @@ export async function saveUserProfile(name, avatar) {
         userId,
         name: cleanName,
         avatar: cleanAvatar,
-        updatedAt: Date.now()
+        updatedAt: Date.now(),
+        lastActive: Date.now()
       }, { merge: true });
     } catch (err) {
       console.warn('[Leaderboard] Error actualizando perfil en Firebase:', err);
@@ -112,6 +130,27 @@ export function calculateXp({ streak = 0, wordsMastered = 0, phrasesMastered = 0
  * Sincroniza el puntaje actual del usuario en la base de datos
  */
 export async function syncUserProgress({ streak = 0, wordsMastered = 0, phrasesMastered = 0, todayActivities = {} }) {
+  // Asegurar que el usuario esté autenticado en Firebase antes de escribir
+  if (isConfigured && db) {
+    try {
+      const authUser = await ensureAuthUser();
+      if (authUser?.uid) {
+        const prevId = localStorage.getItem(STORAGE_USER_ID_KEY);
+        if (prevId && prevId !== authUser.uid) {
+          try {
+            const raw = localStorage.getItem(STORAGE_PROFILE_KEY);
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              parsed.userId = authUser.uid;
+              localStorage.setItem(STORAGE_PROFILE_KEY, JSON.stringify(parsed));
+            }
+          } catch {}
+        }
+        localStorage.setItem(STORAGE_USER_ID_KEY, authUser.uid);
+      }
+    } catch {}
+  }
+
   const profile = getUserProfile();
   const xp = calculateXp({ streak, wordsMastered, phrasesMastered, todayActivities });
 

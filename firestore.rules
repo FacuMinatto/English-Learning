@@ -2,22 +2,22 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /leaderboard/{userId} {
-      // Lectura pública del ranking
+      // Lectura pública del ranking en tiempo real
       allow read: if true;
       
-      // Escritura permitida con validación estricta de estructura y tipos
-      allow write: if request.resource.data.userId == userId
+      // Escritura blindada: el usuario DEBE estar autenticado con Firebase Auth (Anónimo u otro proveedor)
+      // y ÚNICAMENTE puede escribir en el documento que coincide con su propio UID criptográfico.
+      // Nadie puede sobrescribir ni suplantar el puntaje de otro estudiante.
+      allow write: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.data.userId == userId
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0
         && request.resource.data.name.size() <= 24
         && request.resource.data.avatar is string
         && request.resource.data.avatar.size() <= 4
-        && request.resource.data.xp is int
-        && request.resource.data.xp >= 0
-        && request.resource.data.xp <= 5000000
-        && request.resource.data.streak is int
-        && request.resource.data.streak >= 0
-        && request.resource.data.streak <= 5000;
+        && (!('xp' in request.resource.data) || (request.resource.data.xp is int && request.resource.data.xp >= 0 && request.resource.data.xp <= 5000000))
+        && (!('streak' in request.resource.data) || (request.resource.data.streak is int && request.resource.data.streak >= 0 && request.resource.data.streak <= 5000));
     }
 
     // Bloquear acceso a cualquier otra colección no autorizada
