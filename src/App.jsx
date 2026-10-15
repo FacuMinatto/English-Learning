@@ -56,7 +56,6 @@ import { useProgressStore } from './store/useProgressStore';
 const WordleGame = lazy(() => import('./components/WordleGame'));
 const ListenWriteGame = lazy(() => import('./components/ListenWriteGame'));
 const LeaderboardView = lazy(() => import('./components/LeaderboardView'));
-import { addFriendLocally, getUserProfile } from './services/leaderboardService';
 
 import { 
   checkPronunciationMatch, 
@@ -213,14 +212,16 @@ function App() {
           const cleanFId = String(fId).trim().slice(0, 64);
           const cleanFName = String(fName || 'Amigo').trim().slice(0, 24);
           const cleanFAvatar = typeof fAvatar === 'string' && fAvatar.length <= 4 ? fAvatar.trim() : '⚡';
-          const myProfile = getUserProfile();
-          if (cleanFId && cleanFId !== myProfile.userId) {
-            addFriendLocally({
-              userId: cleanFId,
-              name: cleanFName,
-              avatar: cleanFAvatar
-            });
-          }
+          import('./services/leaderboardService').then(({ addFriendLocally, getUserProfile }) => {
+            const myProfile = getUserProfile();
+            if (cleanFId && cleanFId !== myProfile.userId) {
+              addFriendLocally({
+                userId: cleanFId,
+                name: cleanFName,
+                avatar: cleanFAvatar
+              });
+            }
+          }).catch(() => {});
           window.history.replaceState({}, document.title, window.location.pathname);
         }
       } catch {}

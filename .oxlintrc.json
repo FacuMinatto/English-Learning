@@ -13,11 +13,7 @@
     "dist/**",
     "scratch/**",
     "code_backup/**",
-    "android/**",
-    "addMoreWords.cjs",
-    "addTechWords.js",
-    "generateDictionary.js",
-    "generateDictionary.cjs"
+    "android/**"
   ],
   "rules": {
     "no-undef": "error",
