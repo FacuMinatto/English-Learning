@@ -167,23 +167,73 @@ export function getSavedFriends() {
 }
 
 /**
+ * Sanitiza y valida rigurosamente los datos de un usuario del ranking
+ * para evitar inyecciones, desbordes o fallos de renderizado en React.
+ */
+export function sanitizeLeaderboardEntry(raw, fallbackId = '') {
+  if (!raw || typeof raw !== 'object') return null;
+  const rawId = typeof raw.userId === 'string' && raw.userId ? raw.userId : fallbackId;
+  const userId = String(rawId || '').trim().slice(0, 64);
+  if (!userId) return null;
+
+  const rawName = typeof raw.name === 'string' ? raw.name.trim() : 'Estudiante';
+  const name = rawName.slice(0, 24) || 'Estudiante';
+
+  const rawAvatar = typeof raw.avatar === 'string' ? raw.avatar.trim() : '🦉';
+  const avatar = rawAvatar.slice(0, 4) || '🦉';
+
+  const xp = typeof raw.xp === 'number' && Number.isFinite(raw.xp)
+    ? Math.max(0, Math.min(Math.floor(raw.xp), 5000000))
+    : 0;
+
+  const streak = typeof raw.streak === 'number' && Number.isFinite(raw.streak)
+    ? Math.max(0, Math.min(Math.floor(raw.streak), 5000))
+    : 0;
+
+  const wordsMastered = typeof raw.wordsMastered === 'number' && Number.isFinite(raw.wordsMastered)
+    ? Math.max(0, Math.floor(raw.wordsMastered))
+    : 0;
+
+  const phrasesMastered = typeof raw.phrasesMastered === 'number' && Number.isFinite(raw.phrasesMastered)
+    ? Math.max(0, Math.floor(raw.phrasesMastered))
+    : 0;
+
+  const lastActive = typeof raw.lastActive === 'number' && Number.isFinite(raw.lastActive)
+    ? raw.lastActive
+    : Date.now();
+
+  return {
+    userId,
+    name,
+    avatar,
+    xp,
+    streak,
+    wordsMastered,
+    phrasesMastered,
+    lastActive
+  };
+}
+
+/**
  * Agrega un amigo a la lista local
  * Retorna true si se agregó con éxito, false si es el propio usuario o ya existía
  */
 export function addFriendLocally(friend) {
-  if (!friend || !friend.userId) return false;
+  if (!friend || typeof friend !== 'object' || !friend.userId || typeof friend.userId !== 'string') return false;
   const myId = getOrCreateUserId();
-
-  // No permitir auto-agregarse como amigo
-  if (friend.userId === myId) return false;
+  const cleanId = friend.userId.trim().slice(0, 64);
+  if (!cleanId || cleanId === myId) return false;
 
   const friends = getSavedFriends();
-  if (friends.some(f => f.userId === friend.userId)) return false;
+  if (friends.some(f => f.userId === cleanId)) return false;
+
+  const cleanName = typeof friend.name === 'string' ? friend.name.trim().slice(0, 24) || 'Amigo' : 'Amigo';
+  const cleanAvatar = typeof friend.avatar === 'string' && friend.avatar.length <= 4 ? friend.avatar.trim() : '⚡';
 
   friends.push({
-    userId: friend.userId,
-    name: friend.name || 'Amigo',
-    avatar: friend.avatar || '⚡',
+    userId: cleanId,
+    name: cleanName,
+    avatar: cleanAvatar,
     addedAt: Date.now()
   });
 
@@ -199,7 +249,8 @@ export function addFriendLocally(friend) {
  * Elimina un amigo de la lista local
  */
 export function removeFriendLocally(userId) {
-  const friends = getSavedFriends().filter(f => f.userId !== userId);
+  const cleanId = String(userId || '').trim().slice(0, 64);
+  const friends = getSavedFriends().filter(f => f.userId !== cleanId);
   try {
     localStorage.setItem(STORAGE_FRIENDS_KEY, JSON.stringify(friends));
   } catch {}
@@ -211,18 +262,21 @@ export function removeFriendLocally(userId) {
  * Retorna únicamente usuarios reales registrados en Firebase (o el usuario actual).
  */
 export async function getGlobalLeaderboard(myScore) {
+  const sanitizedMyScore = myScore ? sanitizeLeaderboardEntry(myScore, myScore.userId) : null;
+
   if (isConfigured && db) {
     try {
       const q = query(collection(db, 'leaderboard'), orderBy('xp', 'desc'), limit(50));
       const querySnapshot = await getDocs(q);
       const list = [];
       querySnapshot.forEach((docSnap) => {
-        list.push({ ...docSnap.data(), userId: docSnap.id });
+        const item = sanitizeLeaderboardEntry(docSnap.data(), docSnap.id);
+        if (item) list.push(item);
       });
 
       // Asegurar que el usuario actual figure en la lista si no está en el top 50
-      if (myScore && !list.some(u => u.userId === myScore.userId)) {
-        list.push(myScore);
+      if (sanitizedMyScore && !list.some(u => u.userId === sanitizedMyScore.userId)) {
+        list.push(sanitizedMyScore);
       }
 
       return list.sort((a, b) => (b.xp || 0) - (a.xp || 0));
@@ -232,7 +286,7 @@ export async function getGlobalLeaderboard(myScore) {
   }
 
   // Sin usuarios simulados: solo el usuario actual si no hay conexión o no hay más usuarios
-  return myScore ? [myScore] : [];
+  return sanitizedMyScore ? [sanitizedMyScore] : [];
 }
 
 /**
@@ -240,7 +294,8 @@ export async function getGlobalLeaderboard(myScore) {
  */
 export async function getFriendsLeaderboard(myScore) {
   const friends = getSavedFriends();
-  const myUserId = myScore?.userId || getOrCreateUserId();
+  const sanitizedMyScore = myScore ? sanitizeLeaderboardEntry(myScore, myScore.userId) : null;
+  const myUserId = sanitizedMyScore?.userId || getOrCreateUserId();
   // Amigos reales excluyendo al usuario actual
   const validFriends = friends.filter(f => f && f.userId && f.userId !== myUserId);
   const friendIds = validFriends.map(f => f.userId);
@@ -252,15 +307,24 @@ export async function getFriendsLeaderboard(myScore) {
         try {
           const docSnap = await getDoc(doc(db, 'leaderboard', f.userId));
           if (docSnap.exists()) {
-            list.push({ ...docSnap.data(), userId: docSnap.id });
+            const item = sanitizeLeaderboardEntry(docSnap.data(), docSnap.id);
+            if (item) list.push(item);
           } else {
-            list.push({ userId: f.userId, name: f.name, avatar: f.avatar, xp: 0, streak: 0 });
+            list.push({
+              userId: f.userId,
+              name: String(f.name || 'Amigo').slice(0, 24),
+              avatar: String(f.avatar || '⚡').slice(0, 4),
+              xp: 0,
+              streak: 0,
+              wordsMastered: 0,
+              phrasesMastered: 0
+            });
           }
         } catch {}
       }
 
-      if (myScore) {
-        list.push(myScore);
+      if (sanitizedMyScore) {
+        list.push(sanitizedMyScore);
       }
 
       return list.sort((a, b) => (b.xp || 0) - (a.xp || 0));
@@ -272,13 +336,15 @@ export async function getFriendsLeaderboard(myScore) {
   // Fallback local: amigos reales agregados por el usuario
   const localList = validFriends.map(f => ({
     userId: f.userId,
-    name: f.name,
-    avatar: f.avatar,
-    xp: f.xp || 0,
-    streak: f.streak || 0
+    name: String(f.name || 'Amigo').slice(0, 24),
+    avatar: String(f.avatar || '⚡').slice(0, 4),
+    xp: Number(f.xp) || 0,
+    streak: Number(f.streak) || 0,
+    wordsMastered: Number(f.wordsMastered) || 0,
+    phrasesMastered: Number(f.phrasesMastered) || 0
   }));
 
-  if (myScore) localList.push(myScore);
+  if (sanitizedMyScore) localList.push(sanitizedMyScore);
   return localList.sort((a, b) => (b.xp || 0) - (a.xp || 0));
 }
 

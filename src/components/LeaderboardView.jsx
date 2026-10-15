@@ -368,7 +368,7 @@ export default function LeaderboardView({ streakCount = 0, wordsMastered = 0, ph
                   {activeSubTab === 'friends' && !isMe && (
                     <button 
                       className="btn-remove-friend"
-                      onClick={() => { removeFriendLocally(item.userId); loadLeaderboardData(); }}
+                      onClick={() => { removeFriendLocally(item.userId); setRefreshTrigger(k => k + 1); }}
                       title="Eliminar de amigos"
                     >
                       <X size={14} />

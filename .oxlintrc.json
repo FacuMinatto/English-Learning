@@ -1,8 +1,29 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": ["react", "oxc"],
+  "env": {
+    "browser": true
+  },
+  "globals": {
+    "__APP_VERSION__": "readonly",
+    "__GIT_COMMIT__": "readonly",
+    "__BUILD_DATE__": "readonly"
+  },
+  "ignorePatterns": [
+    "dist/**",
+    "scratch/**",
+    "code_backup/**",
+    "android/**",
+    "addMoreWords.cjs",
+    "addTechWords.js",
+    "generateDictionary.js",
+    "generateDictionary.cjs"
+  ],
   "rules": {
+    "no-undef": "error",
     "react/rules-of-hooks": "error",
     "react/only-export-components": ["warn", { "allowConstantExport": true }]
   }
 }
+
+

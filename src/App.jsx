@@ -56,7 +56,7 @@ import { useProgressStore } from './store/useProgressStore';
 const WordleGame = lazy(() => import('./components/WordleGame'));
 const ListenWriteGame = lazy(() => import('./components/ListenWriteGame'));
 const LeaderboardView = lazy(() => import('./components/LeaderboardView'));
-import { addFriendLocally } from './services/leaderboardService';
+import { addFriendLocally, getUserProfile } from './services/leaderboardService';
 
 import { 
   checkPronunciationMatch, 
@@ -210,12 +210,15 @@ function App() {
         const fName = params.get('friendName');
         const fAvatar = params.get('friendAvatar');
         if (fId) {
+          const cleanFId = String(fId).trim().slice(0, 64);
+          const cleanFName = String(fName || 'Amigo').trim().slice(0, 24);
+          const cleanFAvatar = typeof fAvatar === 'string' && fAvatar.length <= 4 ? fAvatar.trim() : '⚡';
           const myProfile = getUserProfile();
-          if (fId !== myProfile.userId) {
+          if (cleanFId && cleanFId !== myProfile.userId) {
             addFriendLocally({
-              userId: fId,
-              name: fName || 'Amigo',
-              avatar: fAvatar || '⚡'
+              userId: cleanFId,
+              name: cleanFName,
+              avatar: cleanFAvatar
             });
           }
           window.history.replaceState({}, document.title, window.location.pathname);
@@ -919,7 +922,6 @@ function App() {
           cardsReviewedToday: 0
         }
       });
-      setLastReminderDate(null);
       setSentAlerts({ date: getTodayStr(), times: [] });
       alert("Progreso reiniciado correctamente.");
       window.location.reload();
@@ -1026,14 +1028,23 @@ function App() {
   };
 
   const addNewWord = async () => {
-    if (!searchTerm.trim()) return;
+    const cleanWord = searchTerm.trim();
+    if (!cleanWord) return;
+
+    if (fullDictionary.some(w => w.english.toLowerCase() === cleanWord.toLowerCase())) {
+      alert(`La palabra "${cleanWord}" ya está en tu vocabulario o biblioteca.`);
+      return;
+    }
+
     setIsTranslating(true);
     try {
-      const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(searchTerm.trim())}&langpair=en|es`);
+      const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(cleanWord)}&langpair=en|es`);
       const data = await res.json();
-      if (data && data.responseData && data.responseData.translatedText) {
-        const translation = data.responseData.translatedText;
-        const cleanWord = searchTerm.trim();
+      const rawTranslation = data?.responseData?.translatedText;
+      const isValid = data?.responseStatus === 200 && rawTranslation && !rawTranslation.toUpperCase().includes('MYMEMORY WARNING');
+
+      if (isValid) {
+        const translation = rawTranslation.trim();
         const newWord = {
           id: 'custom_' + Date.now(), 
           english: cleanWord.charAt(0).toUpperCase() + cleanWord.slice(1),
@@ -1045,10 +1056,10 @@ function App() {
         playFxSound('success', soundEnabled);
         alert(`¡"${newWord.english}" agregada con éxito!`);
       } else {
-        alert("No se encontró la traducción.");
+        alert("No se pudo obtener la traducción automática. Verifica la palabra o intenta de nuevo más tarde.");
       }
     } catch {
-      alert("Error al contactar el servicio de traducción.");
+      alert("Error al contactar el servicio de traducción. Revisa tu conexión a internet.");
     }
     setIsTranslating(false);
   };
@@ -1293,21 +1304,55 @@ function App() {
 
   // Helper to apply imported data
   const applyBackupPayload = (data) => {
-    if (!data || typeof data !== 'object') {
-      throw new Error('Formato inválido');
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+      throw new Error('Formato de copia de seguridad inválido.');
     }
-    if (data.wordProgress) setWordProgress(data.wordProgress);
-    if (data.phraseProgress) setPhraseProgress(data.phraseProgress);
-    if (data.customWords) setCustomWords(data.customWords);
-    if (data.streakData) setStreakData(data.streakData);
-    if (data.themeColor) setThemeColor(data.themeColor);
-    if (data.themeMode) setThemeMode(data.themeMode);
-    if (data.wordsPerDay) setWordsPerDay(data.wordsPerDay);
-    if (data.phrasesPerDay) setPhrasesPerDay(data.phrasesPerDay);
-    if (data.voiceSpeed) setVoiceSpeed(data.voiceSpeed);
-    if (data.soundEnabled !== undefined) setSoundEnabled(data.soundEnabled);
-    if (data.reminderEnabled !== undefined) setReminderEnabled(data.reminderEnabled);
-    if (data.reminderSchedule) setReminderSchedule(data.reminderSchedule);
+    if (data.wordProgress && typeof data.wordProgress === 'object' && !Array.isArray(data.wordProgress)) {
+      setWordProgress(data.wordProgress);
+    }
+    if (data.phraseProgress && typeof data.phraseProgress === 'object' && !Array.isArray(data.phraseProgress)) {
+      setPhraseProgress(data.phraseProgress);
+    }
+    if (Array.isArray(data.customWords)) {
+      const validCustomWords = data.customWords.filter(
+        w => w && typeof w === 'object' && typeof w.english === 'string' && typeof w.spanish === 'string'
+      );
+      setCustomWords(validCustomWords);
+    }
+    if (data.streakData && typeof data.streakData === 'object' && !Array.isArray(data.streakData)) {
+      setStreakData(prev => ({
+        ...prev,
+        ...data.streakData,
+        count: typeof data.streakData.count === 'number' ? data.streakData.count : 1,
+        todayActivities: (data.streakData.todayActivities && typeof data.streakData.todayActivities === 'object')
+          ? data.streakData.todayActivities
+          : { date: getTodayStr(), dailyCompleted: false, quizCompleted: false, phrasesReviewed: 0 }
+      }));
+    }
+    if (typeof data.themeColor === 'string' && /^#[0-9A-Fa-f]{6}$/.test(data.themeColor)) {
+      setThemeColor(data.themeColor);
+    }
+    if (['system', 'light', 'dark'].includes(data.themeMode)) {
+      setThemeMode(data.themeMode);
+    }
+    if (typeof data.wordsPerDay === 'number' && data.wordsPerDay > 0) {
+      setWordsPerDay(Math.min(50, Math.max(1, Math.floor(data.wordsPerDay))));
+    }
+    if (typeof data.phrasesPerDay === 'number' && data.phrasesPerDay > 0) {
+      setPhrasesPerDay(Math.min(50, Math.max(1, Math.floor(data.phrasesPerDay))));
+    }
+    if (typeof data.voiceSpeed === 'number' && data.voiceSpeed >= 0.5 && data.voiceSpeed <= 2.0) {
+      setVoiceSpeed(data.voiceSpeed);
+    }
+    if (typeof data.soundEnabled === 'boolean') {
+      setSoundEnabled(data.soundEnabled);
+    }
+    if (typeof data.reminderEnabled === 'boolean') {
+      setReminderEnabled(data.reminderEnabled);
+    }
+    if (Array.isArray(data.reminderSchedule)) {
+      setReminderSchedule(data.reminderSchedule.filter(t => typeof t === 'string' && /^\d{2}:\d{2}$/.test(t)));
+    }
 
     playFxSound('fanfare', soundEnabled);
     alert("¡Copia de seguridad restaurada con éxito! 🎉 Tu progreso ha sido recuperado.");
